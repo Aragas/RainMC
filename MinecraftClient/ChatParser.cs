@@ -142,13 +142,20 @@ namespace MinecraftClient
                 if ((TranslationRules[rulename].IndexOf("%1$s") >= 0 && TranslationRules[rulename].IndexOf("%2$s") >= 0)
                     && (TranslationRules[rulename].IndexOf("%1$s") > TranslationRules[rulename].IndexOf("%2$s")))
                 {
-                    while (using_data.Count < 2) { using_data.Add(""); }
+                    while (using_data.Count < 2)
+                    {
+                        using_data.Add("");
+                    }
                     string tmp = using_data[0];
                     using_data[0] = using_data[1];
                     using_data[1] = tmp;
                 }
-                string[] syntax = TranslationRules[rulename].Split(new string[] { "%s", "%d", "%1$s", "%2$s" }, StringSplitOptions.None);
-                while (using_data.Count < syntax.Length - 1) { using_data.Add(""); }
+                string[] syntax = TranslationRules[rulename].Split(new string[] {"%s", "%d", "%1$s", "%2$s"},
+                    StringSplitOptions.None);
+                while (using_data.Count < syntax.Length - 1)
+                {
+                    using_data.Add("");
+                }
                 string[] using_array = using_data.ToArray();
                 string translated = "";
                 for (int i = 0; i < syntax.Length - 1; i++)
@@ -159,7 +166,7 @@ namespace MinecraftClient
                 translated += syntax[syntax.Length - 1];
                 return translated;
             }
-            else return "[" + rulename + "] " + String.Join(" ", using_data);
+            else return "[" + rulename + "] " + String.Join(" ", using_data.ToArray());
         }
 
         /// <summary>
