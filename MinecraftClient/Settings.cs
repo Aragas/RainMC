@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.IO;
 
@@ -10,7 +8,6 @@ namespace MinecraftClient
     /// Contains main settings for Minecraft Console Client
     /// Allows settings loading from an INI file
     /// </summary>
-
     public static class Settings
     {
         //Main Settings.

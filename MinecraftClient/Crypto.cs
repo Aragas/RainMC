@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Security.Cryptography;
 using java.security;
@@ -13,7 +11,6 @@ namespace MinecraftClient
     /// <summary>
     /// Cryptographic functions ported from Minecraft Source Code (Java). Decompiled with MCP. Copy, paste, little adjustements.
     /// </summary>
-
     public class Crypto
     {
         public static PublicKey GenerateRSAPublicKey(byte[] key)
@@ -25,7 +22,7 @@ namespace MinecraftClient
 
         public static SecretKey GenerateAESPrivateKey()
         {
-            AesManaged aes = new AesManaged();
+            RijndaelManaged aes = new RijndaelManaged();
             aes.KeySize = 128; aes.GenerateKey();
             return new SecretKeySpec(aes.Key, "AES"); 
         }
@@ -105,7 +102,6 @@ namespace MinecraftClient
         /// <summary>
         /// An encrypted stream using AES
         /// </summary>
-
         public class AesStream : System.IO.Stream
         {
             CryptoStream enc;

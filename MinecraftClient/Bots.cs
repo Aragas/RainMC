@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace MinecraftClient
 {
@@ -77,14 +75,14 @@ namespace MinecraftClient
 
         protected static string getVerbatim(string text)
         {
-            if ( String.IsNullOrEmpty(text) )
+            if (String.IsNullOrEmpty(text))
                 return String.Empty;
 
             int idx = 0;
             var data = new char[text.Length];
 
-            for ( int i = 0; i < text.Length; i++ )
-                if ( text[i] != '§' )
+            for (int i = 0; i < text.Length; i++)
+                if (text[i] != '§')
                     data[idx++] = text[i];
                 else
                     i++;
@@ -98,14 +96,14 @@ namespace MinecraftClient
 
         protected static bool isValidName(string username)
         {
-            if ( String.IsNullOrEmpty(username) )
+            if (String.IsNullOrEmpty(username))
                 return false;
 
-            foreach ( char c in username )
-                if ( !((c >= 'a' && c <= 'z')
+            foreach (char c in username)
+                if (!((c >= 'a' && c <= 'z')
                         || (c >= 'A' && c <= 'Z')
                         || (c >= '0' && c <= '9')
-                        || c == '_') )
+                        || c == '_'))
                     return false;
 
             return true;
@@ -398,18 +396,22 @@ namespace MinecraftClient
 
                 if (isPrivateMessage(text, ref message, ref username))
                 {
-                    if (owners.Contains(username.ToUpper()))
+                    foreach (string x in owners)
                     {
-                        switch (message)
+                        // No more linq.
+                        if (x.Contains(username.ToUpper()))
                         {
-                            case "start":
-                                start();
-                                break;
-                            case "stop":
-                                running = false;
-                                break;
-                            default:
-                                break;
+                            switch (message)
+                            {
+                                case "start":
+                                    start();
+                                    break;
+                                case "stop":
+                                    running = false;
+                                    break;
+                                default:
+                                    break;
+                            }
                         }
                     }
                 }
@@ -422,20 +424,32 @@ namespace MinecraftClient
                             char letter = message.ToUpper()[0];
                             if (letter >= 'A' && letter <= 'Z')
                             {
-                                if (letters.Contains(letter))
+                                if (letters.IndexOf(letter.ToString(), StringComparison.OrdinalIgnoreCase) >= 0)
                                 {
                                     SendText(English ? ("Letter " + letter + " has already been tried.") : ("Le " + letter + " a déjà été proposé."));
                                 }
+
+                                //if (letters.Contains(letter))
+                                //{
+                                //    SendText(English ? ("Letter " + letter + " has already been tried.") : ("Le " + letter + " a déjà été proposé."));
+                                //}
                                 else
                                 {
                                     letters += letter;
                                     compteur = compteur_param;
 
-                                    if (word.Contains(letter))
+                                    if (word.IndexOf(letter.ToString(), StringComparison.OrdinalIgnoreCase) >= 0)
                                     {
                                         for (int i = 0; i < word.Length; i++) { if (word[i] == letter) { discovered[i] = true; } }
                                         SendText(English ? ("Yes, the word contains a " + letter + '!') : ("Le " + letter + " figurait bien dans le mot :)"));
                                     }
+
+                                    //if (word.Contains(letter))
+                                    //{
+                                    //    for (int i = 0; i < word.Length; i++) { if (word[i] == letter) { discovered[i] = true; } }
+                                    //    SendText(English ? ("Yes, the word contains a " + letter + '!') : ("Le " + letter + " figurait bien dans le mot :)"));
+                                    //}
+
                                     else
                                     {
                                         vie--;
@@ -600,62 +614,64 @@ namespace MinecraftClient
                         {
                             Console.Beep(); //Text found !
 
-                            if (ConsoleIO.basicIO) { ConsoleIO.WriteLine(comp.Replace(alert, "§c" + alert + "§r")); } else {
-
-                            #region Displaying the text with the interesting part highlighted
-
-                            Console.BackgroundColor = ConsoleColor.DarkGray;
-                            Console.ForegroundColor = ConsoleColor.White;
-
-                            //Will be used for text displaying
-                            string[] temp = comp.Split(alert.Split(','), StringSplitOptions.RemoveEmptyEntries);
-                            int p = 0;
-
-                            //Special case : alert in the beginning of the text
-                            string test = "";
-                            for (int i = 0; i < alert.Length; i++)
+                            if (ConsoleIO.basicIO) { ConsoleIO.WriteLine(comp.Replace(alert, "§c" + alert + "§r")); }
+                            else
                             {
-                                test += comp[i];
-                            }
-                            if (test == alert)
-                            {
-                                Console.BackgroundColor = ConsoleColor.Yellow;
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                for (int i = 0; i < alert.Length; i++)
-                                {
-                                    ConsoleIO.Write(text[p]);
-                                    p++;
-                                }
-                            }
 
-                            //Displaying the rest of the text
-                            for (int i = 0; i < temp.Length; i++)
-                            {
+                                #region Displaying the text with the interesting part highlighted
+
                                 Console.BackgroundColor = ConsoleColor.DarkGray;
                                 Console.ForegroundColor = ConsoleColor.White;
-                                for (int j = 0; j < temp[i].Length; j++)
+
+                                //Will be used for text displaying
+                                string[] temp = comp.Split(alert.Split(','), StringSplitOptions.RemoveEmptyEntries);
+                                int p = 0;
+
+                                //Special case : alert in the beginning of the text
+                                string test = "";
+                                for (int i = 0; i < alert.Length; i++)
                                 {
-                                    ConsoleIO.Write(text[p]);
-                                    p++;
+                                    test += comp[i];
                                 }
-                                Console.BackgroundColor = ConsoleColor.Yellow;
-                                Console.ForegroundColor = ConsoleColor.Red;
-                                try
+                                if (test == alert)
                                 {
-                                    for (int j = 0; j < alert.Length; j++)
+                                    Console.BackgroundColor = ConsoleColor.Yellow;
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    for (int i = 0; i < alert.Length; i++)
                                     {
                                         ConsoleIO.Write(text[p]);
                                         p++;
                                     }
                                 }
-                                catch (IndexOutOfRangeException) { }
-                            }
-                            Console.BackgroundColor = ConsoleColor.Black;
-                            Console.ForegroundColor = ConsoleColor.Gray;
-                            ConsoleIO.Write('\n');
 
-                            #endregion
-                            
+                                //Displaying the rest of the text
+                                for (int i = 0; i < temp.Length; i++)
+                                {
+                                    Console.BackgroundColor = ConsoleColor.DarkGray;
+                                    Console.ForegroundColor = ConsoleColor.White;
+                                    for (int j = 0; j < temp[i].Length; j++)
+                                    {
+                                        ConsoleIO.Write(text[p]);
+                                        p++;
+                                    }
+                                    Console.BackgroundColor = ConsoleColor.Yellow;
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                    try
+                                    {
+                                        for (int j = 0; j < alert.Length; j++)
+                                        {
+                                            ConsoleIO.Write(text[p]);
+                                            p++;
+                                        }
+                                    }
+                                    catch (IndexOutOfRangeException) { }
+                                }
+                                Console.BackgroundColor = ConsoleColor.Black;
+                                Console.ForegroundColor = ConsoleColor.Gray;
+                                ConsoleIO.Write('\n');
+
+                                #endregion
+
                             }
                         }
                     }

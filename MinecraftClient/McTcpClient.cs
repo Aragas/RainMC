@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Net.Sockets;
 using System.Threading;
@@ -13,7 +12,6 @@ namespace MinecraftClient
     /// The main client class, used to connect to a Minecraft server.
     /// It allows message sending and text receiving.
     /// </summary>
-
     class McTcpClient
     {
         public static int AttemptsLeft = 0;
@@ -33,7 +31,6 @@ namespace MinecraftClient
         /// <param name="username">The chosen username of a premium Minecraft Account</param>
         /// <param name="sessionID">A valid sessionID obtained with MinecraftCom.GetLogin()</param>
         /// <param name="server_port">The server IP (serveradress or serveradress:port)</param>
-
         public McTcpClient(string username, string uuid, string sessionID, string server_port, MinecraftCom handler)
         {
             StartClient(username, uuid, sessionID, server_port, false, handler, "");
@@ -46,7 +43,6 @@ namespace MinecraftClient
         /// <param name="sessionID">A valid sessionID obtained with MinecraftCom.GetLogin()</param>
         /// <param name="server_port">The server IP (serveradress or serveradress:port)</param>
         /// <param name="command">The text or command to send.</param>
-
         public McTcpClient(string username, string uuid, string sessionID, string server_port, MinecraftCom handler, string command)
         {
             StartClient(username, uuid, sessionID, server_port, true, handler, command);
@@ -60,7 +56,6 @@ namespace MinecraftClient
         /// <param name="server_port">The server IP (serveradress or serveradress:port)/param>
         /// <param name="singlecommand">If set to true, the client will send a single command and then disconnect from the server</param>
         /// <param name="command">The text or command to send. Will only be sent if singlecommand is set to true.</param>
-
         private void StartClient(string user, string uuid, string sessionID, string server_port, bool singlecommand, MinecraftCom handler, string command)
         {
             this.handler = handler;
@@ -138,7 +133,6 @@ namespace MinecraftClient
         /// Allows the user to send chat messages, commands, and to leave the server.
         /// Will be automatically called on a separate Thread by StartClient()
         /// </summary>
-
         private void StartTalk()
         {
             try
@@ -214,7 +208,6 @@ namespace MinecraftClient
         /// Receive the data (including chat messages) from the server, and keep the connection alive.
         /// Will be automatically called on a separate Thread by StartClient()
         /// </summary>
-
         private void Updater()
         {
             try
@@ -240,7 +233,6 @@ namespace MinecraftClient
         /// <summary>
         /// Disconnect the client from the server
         /// </summary>
-
         public void Disconnect()
         {
             handler.Disconnect("disconnect.quitting");

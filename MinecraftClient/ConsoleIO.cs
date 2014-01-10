@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace MinecraftClient
@@ -281,7 +280,6 @@ namespace MinecraftClient
     /// Interface for TAB autocompletion
     /// Allows to use any object which has an AutoComplete() method using the IAutocomplete interface
     /// </summary>
-
     public interface IAutoComplete
     {
         string AutoComplete(string BehindCursor);

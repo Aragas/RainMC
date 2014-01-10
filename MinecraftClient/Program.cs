@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace MinecraftClient
 {
@@ -20,17 +17,16 @@ namespace MinecraftClient
         /// <summary>
         /// The main entry point of Minecraft Console Client
         /// </summary>
-
         static void Main(string[] args)
         {
             Console.WriteLine("Console Client for MC 1.7.2 to 1.7.4 - v" + Version + " - By ORelio & Contributors");
 
             //Basic Input/Output ?
-            if (args.Length >= 1 && args[args.Length - 1] == "BasicIO")
-            {
-                ConsoleIO.basicIO = true;
-                args = args.Where(o => !Object.ReferenceEquals(o, args[args.Length - 1])).ToArray();
-            }
+            //if (args.Length >= 1 && args[args.Length - 1] == "BasicIO")
+            //{
+            //    ConsoleIO.basicIO = true;
+            //    args = args.Where(o => !Object.ReferenceEquals(o, args[args.Length - 1])).ToArray();
+            //}
 
             //Processing Command-line arguments or Config File
 
@@ -174,7 +170,6 @@ namespace MinecraftClient
         /// <summary>
         /// Start a new Client
         /// </summary>
-
         private static void InitializeClient()
         {
 
@@ -272,7 +267,6 @@ namespace MinecraftClient
         /// <summary>
         /// Disconnect the current client from the server and restart it
         /// </summary>
-
         public static void Restart()
         {
             new System.Threading.Thread(new System.Threading.ThreadStart(t_restart)).Start();
@@ -281,7 +275,6 @@ namespace MinecraftClient
         /// <summary>
         /// Disconnect the current client from the server and exit the app
         /// </summary>
-
         public static void Exit()
         {
             new System.Threading.Thread(new System.Threading.ThreadStart(t_exit)).Start();
@@ -291,7 +284,6 @@ namespace MinecraftClient
         /// Pause the program, usually when an error or a kick occured, letting the user press Enter to quit OR type /reconnect
         /// </summary>
         /// <returns>Return True if the user typed "/reconnect"</returns>
-
         public static bool ReadLineReconnect()
         {
             string text = Console.ReadLine();
@@ -306,7 +298,6 @@ namespace MinecraftClient
         /// <summary>
         /// Private thread for restarting the program. Called through Restart()
         /// </summary>
-
         private static void t_restart()
         {
             if (Client != null) { Client.Disconnect(); ConsoleIO.Reset(); }
@@ -317,7 +308,6 @@ namespace MinecraftClient
         /// <summary>
         /// Private thread for exiting the program. Called through Exit()
         /// </summary>
-
         private static void t_exit()
         {
             if (Client != null) { Client.Disconnect(); ConsoleIO.Reset(); }

@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace MinecraftClient
 {
     /// <summary>
     /// This class parses JSON chat data from MC 1.6+ and returns the appropriate string to be printed.
     /// </summary>
-
     static class ChatParser
     {
         /// <summary>
@@ -16,7 +13,6 @@ namespace MinecraftClient
         /// </summary>
         /// <param name="json">JSON serialized text</param>
         /// <returns>Returns the translated text</returns>
-
         public static string ParseText(string json)
         {
             int cursorpos = 0;
@@ -28,7 +24,6 @@ namespace MinecraftClient
         /// An internal class to store unserialized JSON data
         /// The data can be an object, an array or a string
         /// </summary>
-
         private class JSONData
         {
             public enum DataType { Object, Array, String };
@@ -51,7 +46,6 @@ namespace MinecraftClient
         /// </summary>
         /// <param name="colorname">Color Name</param>
         /// <returns>Color code</returns>
-
         private static string color2tag(string colorname)
         {
             switch (colorname.ToLower())
@@ -140,7 +134,6 @@ namespace MinecraftClient
         /// <param name="rulename">Name of the rule, chosen by the server</param>
         /// <param name="using_data">Data to be used in the rule</param>
         /// <returns>Returns the formatted text according to the given data</returns>
-
         private static string TranslateString(string rulename, List<string> using_data)
         {
             if (!init) { InitRules(); init = true; }
@@ -175,7 +168,6 @@ namespace MinecraftClient
         /// <param name="toparse">String to parse</param>
         /// <param name="cursorpos">Cursor start (set to 0 for function init)</param>
         /// <returns></returns>
-
         private static JSONData String2Data(string toparse, ref int cursorpos)
         {
             try
@@ -282,7 +274,6 @@ namespace MinecraftClient
         /// </summary>
         /// <param name="data">JSON object to convert</param>
         /// <returns>returns the Minecraft-formatted string</returns>
-
         private static string JSONData2String(JSONData data)
         {
             string extra_result = "";
@@ -339,7 +330,6 @@ namespace MinecraftClient
         /// </summary>
         /// <param name="c">Char to test</param>
         /// <returns>True if hexadecimal</returns>
-
         private static bool isHex(char c) { return ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')); }
     }
 }
