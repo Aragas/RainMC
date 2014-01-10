@@ -212,7 +212,7 @@ namespace MinecraftClient
         protected void ReconnectToTheServer(int ExtraAttempts)
         {
             McTcpClient.AttemptsLeft = ExtraAttempts;
-            Program.Restart();
+            MClient.Restart();
         }
 
         /// <summary>
@@ -221,7 +221,7 @@ namespace MinecraftClient
 
         protected void DisconnectAndExit()
         {
-            Program.Exit();
+            MClient.Exit();
         }
 
         /// <summary>

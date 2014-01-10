@@ -114,7 +114,7 @@ namespace MinecraftClient
                 else
                 {
                     Console.WriteLine("Login failed.");
-                    if (!singlecommand) { Program.ReadLineReconnect(); }
+                    if (!singlecommand) { MClient.ReadLineReconnect(); }
                 }
             }
             catch (SocketException)
@@ -123,7 +123,7 @@ namespace MinecraftClient
                 if (AttemptsLeft > 0)
                 {
                     ChatBot.LogToConsole("Waiting 5 seconds (" + AttemptsLeft + " attempts left)...");
-                    Thread.Sleep(5000); AttemptsLeft--; Program.Restart();
+                    Thread.Sleep(5000); AttemptsLeft--; MClient.Restart();
                 }
                 else if (!singlecommand) { Console.ReadLine(); }
             }
@@ -198,7 +198,7 @@ namespace MinecraftClient
                 {
                     ConsoleIO.WriteLine("You have left the server.");
                     handler.SendRespawnPacket();
-                    Program.Restart();
+                    MClient.Restart();
                 }
             }
             catch (IOException) { }
@@ -225,9 +225,9 @@ namespace MinecraftClient
             if (!handler.HasBeenKicked)
             {
                 ConsoleIO.WriteLine("Connection has been lost.");
-                if (!handler.OnConnectionLost() && !Program.ReadLineReconnect()) { t_sender.Abort(); }
+                if (!handler.OnConnectionLost() && !MClient.ReadLineReconnect()) { t_sender.Abort(); }
             }
-            else if (Program.ReadLineReconnect()) { t_sender.Abort(); }
+            else if (MClient.ReadLineReconnect()) { t_sender.Abort(); }
         }
 
         /// <summary>
