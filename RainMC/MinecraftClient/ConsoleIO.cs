@@ -14,9 +14,9 @@ namespace MinecraftClient
     public static class ConsoleIO
     {
         public static string Text = "";
-        //public static bool BasicIo = false;
+        public static bool BasicIO = true;
         private static IAutoComplete _autocompleteEngine;
-        private static readonly LinkedList<string> Previous = new LinkedList<string>();
+        public static readonly LinkedList<string> History = new LinkedList<string>();
 
         public static void SetAutoCompleteEngine(IAutoComplete engine)
         {
@@ -27,6 +27,7 @@ namespace MinecraftClient
 
         public static string ReadLine()
         {
+
             string buffer;
 
             while (String.IsNullOrEmpty(Text))
@@ -36,7 +37,7 @@ namespace MinecraftClient
 
             buffer = Text;
             Text = "";
-            Previous.AddLast(buffer);
+            //History.AddLast(buffer);
             return buffer;
         }
 
@@ -49,6 +50,7 @@ namespace MinecraftClient
             if (text != null && text.Contains("\n"))
                 text.Replace("\n", "  ");
             API.Log(API.LogType.Warning, text);
+            History.AddLast(text);
         }
 
         //public static void WriteLine(string line)

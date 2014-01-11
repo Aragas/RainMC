@@ -76,7 +76,15 @@ namespace MinecraftClient
         /// 
         private static bool init = false;
         private static Dictionary<string, string> TranslationRules = new Dictionary<string, string>();
-        public static void InitTranslations() { if (!init) { InitRules(); init = true; } }
+
+        public static void InitTranslations()
+        {
+            if (!init)
+            {
+                InitRules(); 
+                init = true;
+            }
+        }
         private static void InitRules()
         {
             //Small default dictionnary of translation rules
@@ -90,12 +98,17 @@ namespace MinecraftClient
             TranslationRules["commands.message.display.outgoing"] = "§7You whisper to %s: %s";
 
             //Use translations from Minecraft assets if translation file is not found but a copy of the game is installed?
-            if (!System.IO.File.Exists(Settings.TranslationsFile) //Try en_US.lang
-              && System.IO.File.Exists(Settings.TranslationsFile_FromMCDir))
-            { Settings.TranslationsFile = Settings.TranslationsFile_FromMCDir; }
-            if (!System.IO.File.Exists(Settings.TranslationsFile) //Still not found? try en_GB.lang
-              && System.IO.File.Exists(Settings.TranslationsFile_FromMCDir_Alt))
-            { Settings.TranslationsFile = Settings.TranslationsFile_FromMCDir_Alt; }
+            if (!System.IO.File.Exists(Settings.TranslationsFile)
+                && System.IO.File.Exists(Settings.TranslationsFile_FromMCDir))
+            {
+                Settings.TranslationsFile = Settings.TranslationsFile_FromMCDir;
+            }
+
+            else if (!System.IO.File.Exists(Settings.TranslationsFile) //Still not found?
+                && System.IO.File.Exists(Settings.TranslationsFile_FromMCDir_Alt))
+            {
+                Settings.TranslationsFile = Settings.TranslationsFile_FromMCDir_Alt;
+            }
 
             //Load an external dictionnary of translation rules
             if (System.IO.File.Exists(Settings.TranslationsFile))
@@ -132,7 +145,12 @@ namespace MinecraftClient
         /// <returns>Returns the formatted text according to the given data</returns>
         private static string TranslateString(string rulename, List<string> using_data)
         {
-            if (!init) { InitRules(); init = true; }
+            if (!init)
+            {
+                InitRules(); 
+                init = true;
+            }
+
             if (TranslationRules.ContainsKey(rulename))
             {
                 if ((TranslationRules[rulename].IndexOf("%1$s") >= 0 && TranslationRules[rulename].IndexOf("%2$s") >= 0)
@@ -142,18 +160,24 @@ namespace MinecraftClient
                     {
                         using_data.Add("");
                     }
+
                     string tmp = using_data[0];
                     using_data[0] = using_data[1];
                     using_data[1] = tmp;
                 }
+
                 string[] syntax = TranslationRules[rulename].Split(new string[] {"%s", "%d", "%1$s", "%2$s"},
                     StringSplitOptions.None);
+
                 while (using_data.Count < syntax.Length - 1)
                 {
                     using_data.Add("");
                 }
+
                 string[] using_array = using_data.ToArray();
+
                 string translated = "";
+
                 for (int i = 0; i < syntax.Length - 1; i++)
                 {
                     translated += syntax[i];
@@ -202,7 +226,11 @@ namespace MinecraftClient
                         cursorpos++;
                         while (toparse[cursorpos] != ']')
                         {
-                            if (toparse[cursorpos] == ',') { cursorpos++; }
+                            if (toparse[cursorpos] == ',')
+                            {
+                                cursorpos++;
+                            }
+
                             JSONData arrayItem = String2Data(toparse, ref cursorpos);
                             data.DataArray.Add(arrayItem);
                         }
@@ -290,14 +318,17 @@ namespace MinecraftClient
                         foreach (JSONData item in extras)
                             extra_result = extra_result + JSONData2String(item) + "§r";
                     }
+
                     if (data.Properties.ContainsKey("color"))
                     {
                         colorcode = color2tag(JSONData2String(data.Properties["color"]));
                     }
+
                     if (data.Properties.ContainsKey("text"))
                     {
                         return extra_result + colorcode + JSONData2String(data.Properties["text"]) + colorcode;
                     }
+
                     else if (data.Properties.ContainsKey("translate"))
                     {
                         List<string> using_data = new List<string>();
@@ -315,10 +346,12 @@ namespace MinecraftClient
 
                 case JSONData.DataType.Array:
                     string result = "";
+
                     foreach (JSONData item in data.DataArray)
                     {
                         result += JSONData2String(item);
                     }
+
                     return result;
 
                 case JSONData.DataType.String:
@@ -333,6 +366,9 @@ namespace MinecraftClient
         /// </summary>
         /// <param name="c">Char to test</param>
         /// <returns>True if hexadecimal</returns>
-        private static bool isHex(char c) { return ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')); }
+        private static bool isHex(char c)
+        {
+            return ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'));
+        }
     }
 }

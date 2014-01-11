@@ -14,9 +14,22 @@ namespace Rainmeter
 
         internal enum MeasureType
         {
-            Answer,
+            Login,
+            Answer
         }
         private MeasureType _type;
+
+        internal enum CountType
+        {
+            One,
+            Two,
+            Three,
+            Four,
+            Five,
+            Six,
+            Seven
+        }
+        private CountType _countType;
 
         /// <summary>
         /// Called when Rainmeter is launched. Just once.
@@ -55,15 +68,50 @@ namespace Rainmeter
         {
             string type = api.ReadString("Type", "");
 
-            Username = api.ReadString("Username", "BotChat");
-            Password = api.ReadString("Password", "");
-            ServerIP = api.ReadString("ServerIP", "localhost");
-
             switch (type.ToUpperInvariant())
             {
-                
+
                 case "ANSWER":
                     _type = MeasureType.Answer;
+
+                    int counttype = api.ReadInt("Count", 1);
+                    switch (counttype)
+                    {
+                        case 1:
+                            _countType = CountType.One;
+                            break;
+
+                        case 2:
+                            _countType = CountType.Two;
+                            break;
+
+                        case 3:
+                            _countType = CountType.Three;
+                            break;
+
+                        case 4:
+                            _countType = CountType.Four;
+                            break;
+
+                        case 5:
+                            _countType = CountType.Five;
+                            break;
+
+                        case 6:
+                            _countType = CountType.Six;
+                            break;
+
+                        case 7:
+                            _countType = CountType.Seven;
+                            break;
+                    }
+
+                    break;
+
+                case "LOGIN":
+                    Username = api.ReadString("Username", "ChatBot");
+                    Password = api.ReadString("Password", "-");
+                    ServerIP = api.ReadString("ServerIP", "localhost");
                     break;
 
                 default:
@@ -84,15 +132,50 @@ namespace Rainmeter
         {
             string type = api.ReadString("Type", "");
 
-            Username = api.ReadString("Username", "BotChat");
-            Password = api.ReadString("Password", "");
-            ServerIP = api.ReadString("ServerIP", "localhost");
-
             switch (type.ToUpperInvariant())
             {
 
                 case "ANSWER":
                     _type = MeasureType.Answer;
+
+                    int counttype = api.ReadInt("Count", 1);
+                    switch (counttype)
+                    {
+                        case 1:
+                            _countType = CountType.One;
+                            break;
+
+                        case 2:
+                            _countType = CountType.Two;
+                            break;
+
+                        case 3:
+                            _countType = CountType.Three;
+                            break;
+
+                        case 4:
+                            _countType = CountType.Four;
+                            break;
+
+                        case 5:
+                            _countType = CountType.Five;
+                            break;
+
+                        case 6:
+                            _countType = CountType.Six;
+                            break;
+
+                        case 7:
+                            _countType = CountType.Seven;
+                            break;
+                    }
+
+                    break;
+
+                case "LOGIN":
+                    Username = api.ReadString("Username", "ChatBot");
+                    Password = api.ReadString("Password", "-");
+                    ServerIP = api.ReadString("ServerIP", "localhost");
                     break;
 
                 default:
@@ -117,6 +200,65 @@ namespace Rainmeter
             {
                 case MeasureType.Answer:
 
+                    if (ConsoleIO.History.Last != null)
+                    {
+                        switch (_countType)
+                        {
+                            case CountType.One:
+                                return ConsoleIO.History.Last.Value;
+
+                            case CountType.Two:
+                                try
+                                {
+                                    return ConsoleIO.History.Last.Previous.Value;
+                                }
+                                catch {}
+                                break;
+
+                            case CountType.Three:
+                                try
+                                {
+                                    return ConsoleIO.History.Last.Previous.Previous.Value;
+                                }
+                                catch {}
+                                break;
+
+                            case CountType.Four:
+                                try
+                                {
+                                    return ConsoleIO.History.Last.Previous.Previous.Previous.Value;
+                                }
+                                catch {}
+                                break;
+
+                            case CountType.Five:
+                                try
+                                {
+                                    return ConsoleIO.History.Last.Previous.Previous.Previous.Previous.Value;
+                                }
+                                catch {}
+                                break;
+
+                            case CountType.Six:
+                                                                try
+                                {
+                                    return ConsoleIO.History.Last.Previous.Previous.Previous.Previous.Previous.Value;
+                                }
+                                catch {}
+                                break;
+
+                            case CountType.Seven:
+                                                                try
+                                {
+                                    return ConsoleIO.History.Last.Previous.Previous.Previous.Previous.Previous.Previous.Value;
+                                }
+                                catch {}
+                                break;
+                        }
+                    }
+
+                    if (ConsoleIO.History.Last != null)
+                        return ConsoleIO.History.Last.Value;
                     break;
 
             }

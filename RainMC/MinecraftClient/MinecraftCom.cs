@@ -301,6 +301,12 @@ namespace MinecraftClient
                     str = str.Replace('\n', ' ');
                 }
 
+                if (ConsoleIO.BasicIO)
+                {
+                    ConsoleIO.Write(str); 
+                    return;
+                }
+
                 string[] subs = str.Split(new char[] { '§' });
                 if (subs[0].Length > 0)
                 {
