@@ -1,4 +1,5 @@
-﻿using MinecraftClient;
+﻿using System;
+using MinecraftClient;
 
 namespace Rainmeter
 {
@@ -21,8 +22,28 @@ namespace Rainmeter
         /// Called when Rainmeter is launched. Just once.
         /// Is called before skin gets data.
         /// </summary>
-        internal Measure()
+        public Measure()
         {
+            AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(CurrentDomain_AssemblyResolve);
+        }
+
+        private System.Reflection.Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            string dllName = args.Name.Contains(",")
+                ? args.Name.Substring(0, args.Name.IndexOf(','))
+                : args.Name.Replace(".dll", "");
+
+            dllName = dllName.Replace(".", "_");
+
+            if (dllName.EndsWith("_resources")) return null;
+
+            System.Resources.ResourceManager rm =
+                new System.Resources.ResourceManager(GetType().Namespace + ".Properties.Resources",
+                    System.Reflection.Assembly.GetExecutingAssembly());
+
+            byte[] bytes = (byte[])rm.GetObject(dllName);
+
+            return System.Reflection.Assembly.Load(bytes);
         }
 
         /// <summary>
@@ -108,23 +129,25 @@ namespace Rainmeter
         /// <param name="command">String containing the arguments to parse.</param>
         internal void ExecuteBang(string command)
         {
-            switch (command)
+            if (command.ToUpperInvariant() == "START")
             {
-                case "START":
-                    MClient.Initialize(Username, Password, ServerIP);
-                    break;
-
-                case "RESTART":
-                    MClient.Restart();
-                    break;
-
-                case "EXIT":
-                    MClient.Exit();
-                    break;
-
-                default:
-                    API.Log(API.LogType.Error, "RainMC.dll Command " + command + " not valid");
-                    break;
+                MClient.Initialize(Username, Password, ServerIP);
+            }
+            else if (command.ToUpperInvariant() == "RESTART")
+            {
+                MClient.Restart();
+            }
+            else if (command.ToUpperInvariant() == "EXIT")
+            {
+                MClient.Exit();
+            }
+            else if (command.StartsWith("Text:"))
+            {
+                ConsoleIO.Text = command.Substring(5);
+            }
+            else
+            {
+                API.Log(API.LogType.Error, "RainMC.dll Command " + command + " not valid");
             }
         }
 
