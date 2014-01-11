@@ -240,7 +240,7 @@ namespace Rainmeter
                                 break;
 
                             case CountType.Six:
-                                                                try
+                                try
                                 {
                                     return ConsoleIO.History.Last.Previous.Previous.Previous.Previous.Previous.Value;
                                 }
@@ -248,7 +248,7 @@ namespace Rainmeter
                                 break;
 
                             case CountType.Seven:
-                                                                try
+                                try
                                 {
                                     return ConsoleIO.History.Last.Previous.Previous.Previous.Previous.Previous.Previous.Value;
                                 }

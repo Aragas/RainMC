@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyCopyright("© 2012-2013 - ORelio, Aragas (Aragasas)")]
+[assembly: AssemblyCopyright("© 2012-2014 - ORelio, Aragas (Aragasas)")]
 [assembly: AssemblyVersion("1.0.0.0")]
 
 #if X64

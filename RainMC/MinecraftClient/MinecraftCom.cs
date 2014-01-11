@@ -25,7 +25,6 @@ namespace MinecraftClient
         /// <param name="accesstoken">Will contain the access token returned by Minecraft.net, if the login is successful</param>
         /// <param name="uuid">Will contain the player's UUID, needed for multiplayer</param>
         /// <returns>Returns the status of the login (Success, Failure, etc.)</returns>
-
         public static LoginResult GetLogin(ref string user, string pass, ref string accesstoken, ref string uuid)
         {
             try
@@ -41,11 +40,21 @@ namespace MinecraftClient
                 else
                 {
                     string[] temp = result.Split(new string[] { "accessToken\":\"" }, StringSplitOptions.RemoveEmptyEntries);
-                    if (temp.Length >= 2) { accesstoken = temp[1].Split('"')[0]; }
+
+                    if (temp.Length >= 2) 
+                        accesstoken = temp[1].Split('"')[0];
+
                     temp = result.Split(new string[] { "name\":\"" }, StringSplitOptions.RemoveEmptyEntries);
-                    if (temp.Length >= 2) { user = temp[1].Split('"')[0]; }
+
+                    if (temp.Length >= 2)
+                        user = temp[1].Split('"')[0];
+                    
                     temp = result.Split(new string[] { "availableProfiles\":[{\"id\":\"" }, StringSplitOptions.RemoveEmptyEntries);
-                    if (temp.Length >= 2) { uuid = temp[1].Split('"')[0]; }
+
+                    if (temp.Length >= 2)
+                        uuid = temp[1].Split('"')[0];
+                    
+
                     return LoginResult.Success;
                 }
             }
@@ -59,11 +68,12 @@ namespace MinecraftClient
                         using (System.IO.StreamReader sr = new System.IO.StreamReader(response.GetResponseStream()))
                         {
                             string result = sr.ReadToEnd();
+
                             if (result.Contains("UserMigratedException"))
-                            {
                                 return LoginResult.AccountMigrated;
-                            }
-                            else return LoginResult.WrongPassword;
+                            
+                            else 
+                                return LoginResult.WrongPassword;
                         }
                     }
                     else return LoginResult.Blocked;
@@ -83,95 +93,125 @@ namespace MinecraftClient
         /// <param name="accesstoken">Session ID</param>
         /// <param name="serverhash">Server ID</param>
         /// <returns>TRUE if session was successfully checked</returns>
-
         public static bool SessionCheck(string uuid, string accesstoken, string serverhash)
         {
             try
             {
                 WebClient wClient = new WebClient();
                 wClient.Headers.Add("Content-Type: application/json");
-                string json_request = "{\"accessToken\":\"" + accesstoken + "\",\"selectedProfile\":\"" + uuid + "\",\"serverId\":\"" + serverhash + "\"}";
-                return (wClient.UploadString("https://sessionserver.mojang.com/session/minecraft/join", json_request) == "");
+                string jsonRequest = "{\"accessToken\":\"" + accesstoken + "\",\"selectedProfile\":\"" + uuid +
+                                     "\",\"serverId\":\"" + serverhash + "\"}";
+                return (wClient.UploadString("https://sessionserver.mojang.com/session/minecraft/join", jsonRequest) ==
+                        "");
             }
-            catch (WebException) { return false; }
+            catch (WebException)
+            {
+                return false;
+            }
         }
 
         #endregion
 
-        TcpClient c = new TcpClient();
-        Crypto.AesStream s;
+        TcpClient _c = new TcpClient();
+        Crypto.AesStream _s;
 
-        public bool HasBeenKicked { get { return connectionlost; } }
-        bool connectionlost = false;
-        bool encrypted = false;
+        public bool HasBeenKicked
+        {
+            get
+            {
+                return connectionlost;
+            }
+        }
+        bool connectionlost;
+        bool encrypted;
         int protocolversion;
 
         public bool Update()
         {
-            for (int i = 0; i < bots.Count; i++) { bots[i].Update(); }
-            if (c.Client == null || !c.Connected) { return false; }
-            int id = 0, size = 0;
+            for (int i = 0; i < _bots.Count; i++)
+            {
+                _bots[i].Update();
+            }
+
+            if (_c.Client == null || !_c.Connected)
+                return false;
+
             try
             {
-                while (c.Client.Available > 0)
+                while (_c.Client.Available > 0)
                 {
-                    size = readNextVarInt(); //Packet size
-                    id = readNextVarInt(); //Packet ID
+                    int size = ReadNextVarInt();
+                    int id = ReadNextVarInt();
+
                     switch (id)
                     {
                         case 0x00:
-                            byte[] keepalive = new byte[4] { 0, 0, 0, 0 };
+                            byte[] keepalive = new byte[4] {0, 0, 0, 0};
                             Receive(keepalive, 0, 4, SocketFlags.None);
-                            byte[] keepalive_packet = concatBytes(getVarInt(0x00), keepalive);
-                            byte[] keepalive_tosend = concatBytes(getVarInt(keepalive_packet.Length), keepalive_packet);
+                            byte[] keepalive_packet = ConcatBytes(GetVarInt(0x00), keepalive);
+                            byte[] keepalive_tosend = ConcatBytes(GetVarInt(keepalive_packet.Length), keepalive_packet);
                             Send(keepalive_tosend);
                             break;
+
                         case 0x02:
-                            string message = readNextString();
+                            string message = ReadNextString();
                             //printstring("§8" + message, false); //Debug : Show the RAW JSON data
                             message = ChatParser.ParseText(message);
-                            printstring(message, false);
-                            for (int i = 0; i < bots.Count; i++) { bots[i].GetText(message); } break;
-                        case 0x37:
-                            int stats_count = readNextVarInt();
-                            for (int i = 0; i < stats_count; i++)
+                            PrintString(message, false);
+                            for (int i = 0; i < _bots.Count; i++)
                             {
-                                string stat_name = readNextString();
-                                readNextVarInt(); //stat value
-                                if (stat_name == "stat.deaths")
-                                    printstring("You are dead. Type /reco to respawn & reconnect.", false);
+                                _bots[i].GetText(message);
                             }
                             break;
+
+                        case 0x37:
+                            int stats_count = ReadNextVarInt();
+                            for (int i = 0; i < stats_count; i++)
+                            {
+                                string stat_name = ReadNextString();
+                                ReadNextVarInt(); //stat value
+                                if (stat_name == "stat.deaths")
+                                    PrintString("You are dead. Type /reco to respawn & reconnect.", false);
+                            }
+                            break;
+
                         case 0x3A:
-                            int autocomplete_count = readNextVarInt();
+                            int autocomplete_count = ReadNextVarInt();
                             string tab_list = "";
                             for (int i = 0; i < autocomplete_count; i++)
                             {
-                                autocomplete_result = readNextString();
-                                if (autocomplete_result != "")
-                                    tab_list = tab_list + autocomplete_result + " ";
+                                _autocompleteResult = ReadNextString();
+                                if (_autocompleteResult != "")
+                                    tab_list = tab_list + _autocompleteResult + " ";
                             }
-                            autocomplete_received = true;
+                            _autocompleteReceived = true;
                             tab_list = tab_list.Trim();
                             if (tab_list.Length > 0)
-                                printstring("§8" + tab_list, false);
+                                PrintString("§8" + tab_list, false);
                             break;
-                        case 0x40: string reason = ChatParser.ParseText(readNextString());
+
+                        case 0x40:
+                            string reason = ChatParser.ParseText(ReadNextString());
                             ConsoleIO.Write("Disconnected by Server :");
-                            printstring(reason, true);
+                            PrintString(reason, true);
                             connectionlost = true;
-                            for (int i = 0; i < bots.Count; i++)
-                                bots[i].OnDisconnect(ChatBot.DisconnectReason.InGameKick, reason);
+                            for (int i = 0; i < _bots.Count; i++)
+                                _bots[i].OnDisconnect(ChatBot.DisconnectReason.InGameKick, reason);
                             return false;
+
                         default:
-                            readData(size - getVarInt(id).Length); //Skip packet
+                            ReadData(size - GetVarInt(id).Length); //Skip packet
                             break;
                     }
                 }
             }
-            catch (SocketException) { return false; }
+            catch (SocketException)
+            {
+                return false;
+            }
             return true;
         }
+
         public void DebugDump()
         {
             byte[] cache = new byte[128000];
@@ -185,9 +225,9 @@ namespace MinecraftClient
             if (!connectionlost)
             {
                 connectionlost = true;
-                for (int i = 0; i < bots.Count; i++)
+                for (int i = 0; i < _bots.Count; i++)
                 {
-                    if (bots[i].OnDisconnect(ChatBot.DisconnectReason.ConnectionLost, "Connection has been lost."))
+                    if (_bots[i].OnDisconnect(ChatBot.DisconnectReason.ConnectionLost, "Connection has been lost."))
                     {
                         return true; //The client is about to restart
                     }
@@ -196,7 +236,7 @@ namespace MinecraftClient
             return false;
         }
 
-        private void readData(int offset)
+        private void ReadData(int offset)
         {
             if (offset > 0)
             {
@@ -208,9 +248,9 @@ namespace MinecraftClient
                 catch (OutOfMemoryException) { }
             }
         }
-        private string readNextString()
+        private string ReadNextString()
         {
-            int length = readNextVarInt();
+            int length = ReadNextVarInt();
             if (length > 0)
             {
                 byte[] cache = new byte[length];
@@ -220,7 +260,7 @@ namespace MinecraftClient
             }
             else return "";
         }
-        private byte[] readNextByteArray()
+        private byte[] ReadNextByteArray()
         {
             byte[] tmp = new byte[2];
             Receive(tmp, 0, 2, SocketFlags.None);
@@ -230,7 +270,7 @@ namespace MinecraftClient
             Receive(data, 0, len, SocketFlags.None);
             return data;
         }
-        private int readNextVarInt()
+        private int ReadNextVarInt()
         {
             int i = 0;
             int j = 0;
@@ -246,7 +286,7 @@ namespace MinecraftClient
             }
             return i;
         }
-        private static byte[] getVarInt(int paramInt)
+        private static byte[] GetVarInt(int paramInt)
         {
             List<byte> bytes = new List<byte>();
             while ((paramInt & -128) != 0)
@@ -257,19 +297,19 @@ namespace MinecraftClient
             bytes.Add((byte)paramInt);
             return bytes.ToArray();
         }
-        private static byte[] concatBytes(params byte[][] bytes)
+        private static byte[] ConcatBytes(params byte[][] bytes)
         {
             List<byte> result = new List<byte>();
             foreach (byte[] array in bytes)
                 result.AddRange(array);
             return result.ToArray();
         }
-        private static int atoi(string str)
+        private static int Atoi(string str)
         {
             return Int32.Parse(Regex.Match(str, @"\d+").Value);
         }
 
-        private static void setcolor(char c)
+        private static void SetColor(char c)
         {
             switch (c)
             {
@@ -292,19 +332,13 @@ namespace MinecraftClient
                 case 'r': Console.ForegroundColor = ConsoleColor.White; break;
             }
         }
-        private static void printstring(string str, bool acceptnewlines)
+        private static void PrintString(string str, bool acceptnewlines)
         {
             if (!String.IsNullOrEmpty(str))
             {
                 if (!acceptnewlines)
                 {
                     str = str.Replace('\n', ' ');
-                }
-
-                if (ConsoleIO.BasicIO)
-                {
-                    ConsoleIO.Write(str); 
-                    return;
                 }
 
                 string[] subs = str.Split(new char[] { '§' });
@@ -318,7 +352,7 @@ namespace MinecraftClient
                 {
                     if (subs[i].Length > 0)
                     {
-                        setcolor(subs[i][0]);
+                        SetColor(subs[i][0]);
                         if (subs[i].Length > 1)
                         {
                             text += subs[i].Substring(1, subs[i].Length - 1);
@@ -329,47 +363,61 @@ namespace MinecraftClient
             }
         }
 
-        private bool autocomplete_received = false;
-        private string autocomplete_result = "";
-        public string AutoComplete(string behindcursor)
+        private bool _autocompleteReceived;
+        private string _autocompleteResult = "";
+        public string AutoComplete(string behindCursor)
         {
-            if (String.IsNullOrEmpty(behindcursor))
+            if (String.IsNullOrEmpty(behindCursor))
                 return "";
 
-            byte[] packet_id = getVarInt(0x14);
-            byte[] tocomplete_val = Encoding.UTF8.GetBytes(behindcursor);
-            byte[] tocomplete_len = getVarInt(tocomplete_val.Length);
-            byte[] tabcomplete_packet = concatBytes(packet_id, tocomplete_len, tocomplete_val);
-            byte[] tabcomplete_packet_tosend = concatBytes(getVarInt(tabcomplete_packet.Length), tabcomplete_packet);
+            byte[] packet_id = GetVarInt(0x14);
+            byte[] tocomplete_val = Encoding.UTF8.GetBytes(behindCursor);
+            byte[] tocomplete_len = GetVarInt(tocomplete_val.Length);
+            byte[] tabcomplete_packet = ConcatBytes(packet_id, tocomplete_len, tocomplete_val);
+            byte[] tabcomplete_packet_tosend = ConcatBytes(GetVarInt(tabcomplete_packet.Length), tabcomplete_packet);
 
-            autocomplete_received = false;
-            autocomplete_result = behindcursor;
+            _autocompleteReceived = false;
+            _autocompleteResult = behindCursor;
             Send(tabcomplete_packet_tosend);
 
             int wait_left = 50; //do not wait more than 5 seconds (50 * 100 ms)
-            while (wait_left > 0 && !autocomplete_received) { System.Threading.Thread.Sleep(100); wait_left--; }
-            return autocomplete_result;
+            while (wait_left > 0 && !_autocompleteReceived) { System.Threading.Thread.Sleep(100); wait_left--; }
+            return _autocompleteResult;
         }
 
-        public void setVersion(int ver) { protocolversion = ver; }
-        public void setClient(TcpClient n) { c = n; }
-        private void setEncryptedClient(Crypto.AesStream n) { s = n; encrypted = true; }
+        public void SetVersion(int ver)
+        {
+            protocolversion = ver;
+        }
+
+        public void SetClient(TcpClient n)
+        {
+            _c = n;
+        }
+
+        private void SetEncryptedClient(Crypto.AesStream n)
+        {
+            _s = n; 
+            encrypted = true;
+        }
+
         private void Receive(byte[] buffer, int start, int offset, SocketFlags f)
         {
-            while (c.Client.Available < start + offset) { }
+            while (_c.Client.Available < start + offset) { }
             if (encrypted)
             {
-                s.Read(buffer, start, offset);
+                _s.Read(buffer, start, offset);
             }
-            else c.Client.Receive(buffer, start, offset, f);
+            else _c.Client.Receive(buffer, start, offset, f);
         }
+
         private void Send(byte[] buffer)
         {
             if (encrypted)
             {
-                s.Write(buffer, 0, buffer.Length);
+                _s.Write(buffer, 0, buffer.Length);
             }
-            else c.Client.Send(buffer);
+            else _c.Client.Send(buffer);
         }
 
         public static bool GetServerInfo(string serverIP, ref int protocolversion, ref string version)
@@ -395,36 +443,36 @@ namespace MinecraftClient
 
                 TcpClient tcp = new TcpClient(host, port);
                 
-                byte[] packet_id = getVarInt(0);
-                byte[] protocol_version = getVarInt(4);
+                byte[] packet_id = GetVarInt(0);
+                byte[] protocol_version = GetVarInt(4);
                 byte[] server_adress_val = Encoding.UTF8.GetBytes(host);
-                byte[] server_adress_len = getVarInt(server_adress_val.Length);
+                byte[] server_adress_len = GetVarInt(server_adress_val.Length);
                 byte[] server_port = BitConverter.GetBytes((ushort)port); Array.Reverse(server_port);
-                byte[] next_state = getVarInt(1);
-                byte[] packet = concatBytes(packet_id, protocol_version, server_adress_len, server_adress_val, server_port, next_state);
-                byte[] tosend = concatBytes(getVarInt(packet.Length), packet);
+                byte[] next_state = GetVarInt(1);
+                byte[] packet = ConcatBytes(packet_id, protocol_version, server_adress_len, server_adress_val, server_port, next_state);
+                byte[] tosend = ConcatBytes(GetVarInt(packet.Length), packet);
 
                 tcp.Client.Send(tosend, SocketFlags.None);
 
-                byte[] status_request = getVarInt(0);
-                byte[] request_packet = concatBytes(getVarInt(status_request.Length), status_request);
+                byte[] status_request = GetVarInt(0);
+                byte[] request_packet = ConcatBytes(GetVarInt(status_request.Length), status_request);
 
                 tcp.Client.Send(request_packet, SocketFlags.None);
 
                 MinecraftCom ComTmp = new MinecraftCom();
-                ComTmp.setClient(tcp);
-                if (ComTmp.readNextVarInt() > 0) //Read Response length
+                ComTmp.SetClient(tcp);
+                if (ComTmp.ReadNextVarInt() > 0) //Read Response length
                 {
-                    if (ComTmp.readNextVarInt() == 0x00) //Read Packet ID
+                    if (ComTmp.ReadNextVarInt() == 0x00) //Read Packet ID
                     {
-                        string result = ComTmp.readNextString(); //Get the Json data
+                        string result = ComTmp.ReadNextString(); //Get the Json data
                         if (result[0] == '{' && result.Contains("protocol\":") && result.Contains("name\":\""))
                         {
                             string[] tmp_ver = result.Split(new string[] { "protocol\":" }, StringSplitOptions.None);
                             string[] tmp_name = result.Split(new string[] { "name\":\"" }, StringSplitOptions.None);
                             if (tmp_ver.Length >= 2 && tmp_name.Length >= 2)
                             {
-                                protocolversion = atoi(tmp_ver[1]);
+                                protocolversion = Atoi(tmp_ver[1]);
                                 version = tmp_name[1].Split('"')[0];
                                 //ConsoleIO.Write(result); //Debug: show the full Json string
                                 ConsoleIO.Write("Server version : " + version + " (protocol v" + protocolversion + ").");
@@ -442,39 +490,40 @@ namespace MinecraftClient
                 return false;
             }
         }
+
         public bool Login(string username, string uuid, string sessionID, string host, int port)
         {
-            byte[] packet_id = getVarInt(0);
-            byte[] protocol_version = getVarInt(4);
+            byte[] packet_id = GetVarInt(0);
+            byte[] protocol_version = GetVarInt(4);
             byte[] server_adress_val = Encoding.UTF8.GetBytes(host);
-            byte[] server_adress_len = getVarInt(server_adress_val.Length);
+            byte[] server_adress_len = GetVarInt(server_adress_val.Length);
             byte[] server_port = BitConverter.GetBytes((ushort)port); Array.Reverse(server_port);
-            byte[] next_state = getVarInt(2);
-            byte[] handshake_packet = concatBytes(packet_id, protocol_version, server_adress_len, server_adress_val, server_port, next_state);
-            byte[] handshake_packet_tosend = concatBytes(getVarInt(handshake_packet.Length), handshake_packet);
+            byte[] next_state = GetVarInt(2);
+            byte[] handshake_packet = ConcatBytes(packet_id, protocol_version, server_adress_len, server_adress_val, server_port, next_state);
+            byte[] handshake_packet_tosend = ConcatBytes(GetVarInt(handshake_packet.Length), handshake_packet);
 
             Send(handshake_packet_tosend);
 
             byte[] username_val = Encoding.UTF8.GetBytes(username);
-            byte[] username_len = getVarInt(username_val.Length);
-            byte[] login_packet = concatBytes(packet_id, username_len, username_val);
-            byte[] login_packet_tosend = concatBytes(getVarInt(login_packet.Length), login_packet);
+            byte[] username_len = GetVarInt(username_val.Length);
+            byte[] login_packet = ConcatBytes(packet_id, username_len, username_val);
+            byte[] login_packet_tosend = ConcatBytes(GetVarInt(login_packet.Length), login_packet);
 
             Send(login_packet_tosend);
 
-            readNextVarInt(); //Packet size
-            int pid = readNextVarInt(); //Packet ID
+            ReadNextVarInt(); //Packet size
+            int pid = ReadNextVarInt(); //Packet ID
             if (pid == 0x00) //Login rejected
             {
                 ConsoleIO.Write("Login rejected by Server :");
-                printstring(ChatParser.ParseText(readNextString()), true);
+                PrintString(ChatParser.ParseText(ReadNextString()), true);
                 return false;
             }
             else if (pid == 0x01) //Encryption request
             {
-                string serverID = readNextString();
-                byte[] Serverkey_RAW = readNextByteArray();
-                byte[] token = readNextByteArray();
+                string serverID = ReadNextString();
+                byte[] Serverkey_RAW = ReadNextByteArray();
+                byte[] token = ReadNextByteArray();
                 var PublicServerkey = Crypto.GenerateRSAPublicKey(Serverkey_RAW);
                 var SecretKey = Crypto.GenerateAESPrivateKey();
                 return StartEncryption(uuid, sessionID, token, serverID, PublicServerkey, SecretKey);
@@ -486,6 +535,7 @@ namespace MinecraftClient
             }
             else return false;
         }
+
         public bool StartEncryption(string uuid, string sessionID, byte[] token, string serverIDhash, java.security.PublicKey serverKey, javax.crypto.SecretKey secretKey)
         {
             ConsoleIO.Write("Crypto keys & hash generated.");
@@ -493,7 +543,7 @@ namespace MinecraftClient
             if (serverIDhash != "-")
             {
                 ConsoleIO.Write("Checking Session...");
-                if (!SessionCheck(uuid, sessionID, new java.math.BigInteger(Crypto.getServerHash(serverIDhash, serverKey, secretKey)).toString(16)))
+                if (!SessionCheck(uuid, sessionID, new java.math.BigInteger(Crypto.GetServerHash(serverIDhash, serverKey, secretKey)).toString(16)))
                 {
                     return false;
                 }
@@ -506,17 +556,17 @@ namespace MinecraftClient
             byte[] token_len = BitConverter.GetBytes((short)token_enc.Length); Array.Reverse(token_len);
 
             //Encryption Response packet
-            byte[] packet_id = getVarInt(0x01);
-            byte[] encryption_response = concatBytes(packet_id, key_len, key_enc, token_len, token_enc);
-            byte[] encryption_response_tosend = concatBytes(getVarInt(encryption_response.Length), encryption_response);
+            byte[] packet_id = GetVarInt(0x01);
+            byte[] encryption_response = ConcatBytes(packet_id, key_len, key_enc, token_len, token_enc);
+            byte[] encryption_response_tosend = ConcatBytes(GetVarInt(encryption_response.Length), encryption_response);
             Send(encryption_response_tosend);
 
             //Start client-side encryption
-            setEncryptedClient(Crypto.SwitchToAesMode(c.GetStream(), secretKey));
+            SetEncryptedClient(Crypto.SwitchToAesMode(_c.GetStream(), secretKey));
 
             //Get the next packet
-            readNextVarInt(); //Skip Packet size (not needed)
-            return (readNextVarInt() == 0x02); //Packet ID. 0x02 = Login Success
+            ReadNextVarInt(); //Skip Packet size (not needed)
+            return (ReadNextVarInt() == 0x02); //Packet ID. 0x02 = Login Success
         }
 
         public bool SendChatMessage(string message)
@@ -525,28 +575,33 @@ namespace MinecraftClient
                 return true;
             try
             {
-                byte[] packet_id = getVarInt(0x01);
+                byte[] packet_id = GetVarInt(0x01);
                 byte[] message_val = Encoding.UTF8.GetBytes(message);
-                byte[] message_len = getVarInt(message_val.Length);
-                byte[] message_packet = concatBytes(packet_id, message_len, message_val);
-                byte[] message_packet_tosend = concatBytes(getVarInt(message_packet.Length), message_packet);
+                byte[] message_len = GetVarInt(message_val.Length);
+                byte[] message_packet = ConcatBytes(packet_id, message_len, message_val);
+                byte[] message_packet_tosend = ConcatBytes(GetVarInt(message_packet.Length), message_packet);
                 Send(message_packet_tosend);
                 return true;
             }
-            catch (SocketException) { return false; }
+            catch (SocketException)
+            {
+                return false;
+            }
         }
+
         public bool SendRespawnPacket()
         {
             try
             {
-                byte[] packet_id = getVarInt(0x16);
-                byte[] action_id = new byte[] { 0 };
-                byte[] respawn_packet = concatBytes(getVarInt(packet_id.Length + 1), packet_id, action_id);
+                byte[] packet_id = GetVarInt(0x16);
+                byte[] action_id = { 0 };
+                byte[] respawn_packet = ConcatBytes(GetVarInt(packet_id.Length + 1), packet_id, action_id);
                 Send(respawn_packet);
                 return true;
             }
             catch (SocketException) { return false; }
         }
+
         public void Disconnect(string message)
         {
             if (message == null)
@@ -554,20 +609,20 @@ namespace MinecraftClient
 
             try
             {
-                byte[] packet_id = getVarInt(0x40);
+                byte[] packet_id = GetVarInt(0x40);
                 byte[] message_val = Encoding.UTF8.GetBytes(message);
-                byte[] message_len = getVarInt(message_val.Length);
-                byte[] disconnect_packet = concatBytes(packet_id, message_len, message_val);
-                byte[] disconnect_packet_tosend = concatBytes(getVarInt(disconnect_packet.Length), disconnect_packet);
+                byte[] message_len = GetVarInt(message_val.Length);
+                byte[] disconnect_packet = ConcatBytes(packet_id, message_len, message_val);
+                byte[] disconnect_packet_tosend = ConcatBytes(GetVarInt(disconnect_packet.Length), disconnect_packet);
                 Send(disconnect_packet_tosend);
             }
             catch (SocketException) { }
             catch (System.IO.IOException) { }
         }
 
-        private List<ChatBot> bots = new List<ChatBot>();
-        public void BotLoad(ChatBot b) { b.SetHandler(this); bots.Add(b); b.Initialize(); }
-        public void BotUnLoad(ChatBot b) { bots.RemoveAll(item => object.ReferenceEquals(item, b)); }
-        public void BotClear() { bots.Clear(); }
+        private readonly List<ChatBot> _bots = new List<ChatBot>();
+        public void BotLoad(ChatBot b) { b.SetHandler(this); _bots.Add(b); b.Initialize(); }
+        public void BotUnLoad(ChatBot b) { _bots.RemoveAll(item => object.ReferenceEquals(item, b)); }
+        public void BotClear() { _bots.Clear(); }
     }
 }

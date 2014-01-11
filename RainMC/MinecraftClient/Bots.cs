@@ -13,7 +13,6 @@ namespace MinecraftClient
     /// <summary>
     /// The virtual class containing anything you need for creating chat bots.
     /// </summary>
-
     public abstract class ChatBot
     {
         public enum DisconnectReason { InGameKick, LoginRejected, ConnectionLost };
@@ -29,20 +28,17 @@ namespace MinecraftClient
         /// <summary>
         /// Anything you want to initialize your bot, will be called on load by MinecraftCom
         /// </summary>
-
         public virtual void Initialize() { }
 
         /// <summary>
         /// Will be called every ~100ms (10fps) if loaded in MinecraftCom
         /// </summary>
-
         public virtual void Update() { }
 
         /// <summary>
         /// Any text sent by the server will be sent here by MinecraftCom
         /// </summary>
         /// <param name="text">Text from the server</param>
-
         public virtual void GetText(string text) { }
 
         /// <summary>
@@ -51,7 +47,6 @@ namespace MinecraftClient
         /// <param name="reason">Disconnect Reason</param>
         /// <param name="message">Kick message, if any</param>
         /// <returns>Return TRUE if the client is about to restart</returns>
-
         public virtual bool OnDisconnect(DisconnectReason reason, string message) { return false; }
 
         #region ToolBox
@@ -60,7 +55,6 @@ namespace MinecraftClient
         /// Send text to the server. Can be anything such as chat messages or commands
         /// </summary>
         /// <param name="text">Text to send to the server</param>
-
         protected void SendText(string text)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -72,7 +66,6 @@ namespace MinecraftClient
         /// <summary>
         /// Remove color codes ("§c") from a text message received from the server
         /// </summary>
-
         protected static string getVerbatim(string text)
         {
             if (String.IsNullOrEmpty(text))
@@ -93,7 +86,6 @@ namespace MinecraftClient
         /// <summary>
         /// Verify that a string contains only a-z A-Z 0-9 and _ characters.
         /// </summary>
-
         protected static bool isValidName(string username)
         {
             if (String.IsNullOrEmpty(username))
@@ -116,7 +108,6 @@ namespace MinecraftClient
         /// <param name="message">if it's a private message, this will contain the message</param>
         /// <param name="sender">if it's a private message, this will contain the player name that sends the message</param>
         /// <returns>Returns true if the text is a private message</returns>
-
         protected static bool isPrivateMessage(string text, ref string message, ref string sender)
         {
             if (text == "") { return false; }
@@ -155,7 +146,6 @@ namespace MinecraftClient
         /// <param name="message">if it's message, this will contain the message</param>
         /// <param name="sender">if it's message, this will contain the player name that sends the message</param>
         /// <returns>Returns true if the text is a chat message</returns>
-
         protected static bool isChatMessage(string text, ref string message, ref string sender)
         {
             //Detect chat messages
@@ -188,7 +178,6 @@ namespace MinecraftClient
         /// Writes some text in the console. Nothing will be sent to the server.
         /// </summary>
         /// <param name="text">Log text to write</param>
-
         public static void LogToConsole(string text)
         {
             Console.ForegroundColor = ConsoleColor.DarkGray;
@@ -200,7 +189,6 @@ namespace MinecraftClient
         /// Disconnect from the server and restart the program
         /// It will unload & reload all the bots and then reconnect to the server
         /// </summary>
-
         protected void ReconnectToTheServer() { ReconnectToTheServer(3); }
 
         /// <summary>
@@ -208,7 +196,6 @@ namespace MinecraftClient
         /// It will unload & reload all the bots and then reconnect to the server
         /// </summary>
         /// <param name="attempts">If connection fails, the client will make X extra attempts</param>
-
         protected void ReconnectToTheServer(int ExtraAttempts)
         {
             McTcpClient.AttemptsLeft = ExtraAttempts;
@@ -218,7 +205,6 @@ namespace MinecraftClient
         /// <summary>
         /// Disconnect from the server and exit the program
         /// </summary>
-
         protected void DisconnectAndExit()
         {
             MClient.Exit();
@@ -227,7 +213,6 @@ namespace MinecraftClient
         /// <summary>
         /// Unload the chatbot, and release associated memory.
         /// </summary>
-
         protected void UnloadBot()
         {
             handler.BotUnLoad(this);
@@ -241,7 +226,6 @@ namespace MinecraftClient
         /// <summary>
         /// Example of message receiving.
         /// </summary>
-
         public class TestBot : ChatBot
         {
             public override void GetText(string text)
@@ -264,7 +248,6 @@ namespace MinecraftClient
         /// <summary>
         /// This bot sends a /ping command every 60 seconds in order to stay non-afk.
         /// </summary>
-
         public class AntiAFK : ChatBot
         {
             private int count;
@@ -274,7 +257,6 @@ namespace MinecraftClient
             /// This bot sends a /ping command every X seconds in order to stay non-afk.
             /// </summary>
             /// <param name="pingparam">Time amount between each ping (10 = 1s, 600 = 1 minute, etc.)</param>
-
             public AntiAFK(int pingparam)
             {
                 count = 0;
@@ -296,7 +278,6 @@ namespace MinecraftClient
         /// <summary>
         /// This bot sends a /list command every X seconds and save the result.
         /// </summary>
-
         public class PlayerListLogger : ChatBot
         {
             private int count;
@@ -307,7 +288,6 @@ namespace MinecraftClient
             /// This bot sends a  /list command every X seconds and save the result.
             /// </summary>
             /// <param name="pingparam">Time amount between each list ping (10 = 1s, 600 = 1 minute, etc.)</param>
-
             public PlayerListLogger(int pingparam, string filetosavein)
             {
                 count = 0;
@@ -342,7 +322,6 @@ namespace MinecraftClient
         /// <summary>
         /// "Le jeu du Pendu" (Hangman game)
         /// </summary>
-
         public class Pendu : ChatBot
         {
             private int vie = 0;
@@ -360,7 +339,6 @@ namespace MinecraftClient
             /// "Le jeu du Pendu" (Hangman Game)
             /// </summary>
             /// <param name="english">if true, the game will be in english. If false, the game will be in french.</param>
-
             public Pendu(bool english)
             {
                 English = english;
@@ -560,7 +538,6 @@ namespace MinecraftClient
         /// <summary>
         /// This bot make the console beep on some specified words. Useful to detect when someone is talking to you, for example.
         /// </summary>
-
         public class Alerts : ChatBot
         {
             private string[] dictionary = new string[0];
@@ -685,7 +662,6 @@ namespace MinecraftClient
         /// <summary>
         /// This bot saves the received messages in a text file.
         /// </summary>
-
         public class ChatLog : ChatBot
         {
             public enum MessageFilter { AllText, AllMessages, OnlyChat, OnlyWhispers };
@@ -701,7 +677,6 @@ namespace MinecraftClient
             /// <param name="file">The file to save the log in</param>
             /// <param name="filter">The kind of messages to save</param>
             /// <param name="AddDateAndTime">Add a date and time before each message</param>
-
             public ChatLog(string file, MessageFilter filter, bool AddDateAndTime)
             {
                 dateandtime = AddDateAndTime;
@@ -793,7 +768,6 @@ namespace MinecraftClient
         /// <summary>
         /// This bot automatically re-join the server if kick message contains predefined string (Server is restarting ...)
         /// </summary>
-
         public class AutoRelog : ChatBot
         {
             private string[] dictionary = new string[0];
@@ -805,7 +779,6 @@ namespace MinecraftClient
             /// </summary>
             /// <param name="DelayBeforeRelog">Delay before re-joining the server (in seconds)</param>
             /// <param name="retries">Number of retries if connection fails (-1 = infinite)</param>
-
             public AutoRelog(int DelayBeforeRelog, int retries)
             {
                 attempts = retries;
@@ -852,7 +825,6 @@ namespace MinecraftClient
         /// <summary>
         /// Automatically send login command on servers usign the xAuth plugin
         /// </summary>
-
         public class xAuth : ChatBot
         {
             private string password;
@@ -879,7 +851,6 @@ namespace MinecraftClient
         /// Usage: bot:scripting:filename
         /// Script must be placed in the config directory
         /// </summary>
-
         public class Scripting : ChatBot
         {
             private string file;
@@ -887,6 +858,7 @@ namespace MinecraftClient
             private int sleepticks = 10;
             private int sleepticks_interval = 10;
             private int nextline = 0;
+
             public Scripting(string filename)
             {
                 file = filename;

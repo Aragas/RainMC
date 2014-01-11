@@ -19,8 +19,8 @@ namespace MinecraftClient
         public static string ServerIP = "";
 
         //Other Settings
-        public static string TranslationsFile_FromMCDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\.minecraft\assets\virtual\legacy\lang\ru_RU.lang";
-        public static string TranslationsFile_FromMCDir_Alt = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\.minecraft\assets\virtual\legacy\lang\en_US.lang";
+        public static readonly string TranslationsFile_FromMCDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\.minecraft\assets\virtual\legacy\lang\ru_RU.lang";
+        public static readonly string TranslationsFile_FromMCDir_Alt = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) + @"\.minecraft\assets\virtual\legacy\lang\en_US.lang";
         public static string TranslationsFile = "";//"translations.lang";
         public static string Bots_OwnersFile = "bot-owners.txt";
 

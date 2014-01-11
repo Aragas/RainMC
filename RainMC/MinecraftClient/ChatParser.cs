@@ -6,85 +6,24 @@ namespace MinecraftClient
     /// <summary>
     /// This class parses JSON chat data from MC 1.6+ and returns the appropriate string to be printed.
     /// </summary>
-    static class ChatParser
+    internal static class ChatParser
     {
-        /// <summary>
-        /// The main function to convert text from MC 1.6+ JSON to MC 1.5.2 formatted text
-        /// </summary>
-        /// <param name="json">JSON serialized text</param>
-        /// <returns>Returns the translated text</returns>
-        public static string ParseText(string json)
-        {
-            int cursorpos = 0;
-            JSONData jsonData = String2Data(json, ref cursorpos);
-            return JSONData2String(jsonData);
-        }
+        private static readonly Dictionary<string, string> TranslationRules = new Dictionary<string, string>();
 
-        /// <summary>
-        /// An internal class to store unserialized JSON data
-        /// The data can be an object, an array or a string
-        /// </summary>
-        private class JSONData
-        {
-            public enum DataType { Object, Array, String };
-            private DataType type;
-            public DataType Type { get { return type; } }
-            public Dictionary<string, JSONData> Properties;
-            public List<JSONData> DataArray;
-            public string StringValue;
-            public JSONData(DataType datatype)
-            {
-                type = datatype;
-                Properties = new Dictionary<string, JSONData>();
-                DataArray = new List<JSONData>();
-                StringValue = String.Empty;
-            }
-        }
+        private static bool _init;
 
-        /// <summary>
-        /// Get the classic color tag corresponding to a color name
-        /// </summary>
-        /// <param name="colorname">Color Name</param>
-        /// <returns>Color code</returns>
-        private static string color2tag(string colorname)
+        public static void InitTranslations()
         {
-            switch (colorname.ToLower())
+            if (!_init)
             {
-                case "black": return "§0";
-                case "dark_blue": return "§1";
-                case "dark_green": return "§2";
-                case "dark_aqua": return "§3";
-                case "dark_red": return "§4";
-                case "dark_purple": return "§5";
-                case "gold": return "§6";
-                case "gray": return "§7";
-                case "dark_gray": return "§8";
-                case "blue": return "§9";
-                case "green": return "§a";
-                case "aqua": return "§b";
-                case "red": return "§c";
-                case "light_purple": return "§d";
-                case "yellow": return "§e";
-                case "white": return "§f";
-                default: return "";
+                InitRules();
+                _init = true;
             }
         }
 
         /// <summary>
         /// Rules for text translation
         /// </summary>
-        /// 
-        private static bool init = false;
-        private static Dictionary<string, string> TranslationRules = new Dictionary<string, string>();
-
-        public static void InitTranslations()
-        {
-            if (!init)
-            {
-                InitRules(); 
-                init = true;
-            }
-        }
         private static void InitRules()
         {
             //Small default dictionnary of translation rules
@@ -137,56 +76,115 @@ namespace MinecraftClient
         }
 
         /// <summary>
-        /// Format text using a specific formatting rule.
-        /// Example : * %s %s + ["ORelio", "is doing something"] = * ORelio is doing something
+        /// The main function to convert text from MC 1.6+ JSON to MC 1.5.2 formatted text
         /// </summary>
-        /// <param name="rulename">Name of the rule, chosen by the server</param>
-        /// <param name="using_data">Data to be used in the rule</param>
-        /// <returns>Returns the formatted text according to the given data</returns>
-        private static string TranslateString(string rulename, List<string> using_data)
+        /// <param name="json">JSON serialized text</param>
+        /// <returns>Returns the translated text</returns>
+        public static string ParseText(string json)
         {
-            if (!init)
-            {
-                InitRules(); 
-                init = true;
-            }
+            int cursorpos = 0;
+            JSONData jsonData = String2Data(json, ref cursorpos);
+            return JSONData2String(jsonData, "");
+        }
 
-            if (TranslationRules.ContainsKey(rulename))
+        /// <summary>
+        /// Get the classic color tag corresponding to a color name
+        /// </summary>
+        /// <param name="colorname">Color Name</param>
+        /// <returns>Color code</returns>
+        private static string Color2Tag(string colorname)
+        {
+            switch (colorname.ToLower())
             {
-                if ((TranslationRules[rulename].IndexOf("%1$s") >= 0 && TranslationRules[rulename].IndexOf("%2$s") >= 0)
-                    && (TranslationRules[rulename].IndexOf("%1$s") > TranslationRules[rulename].IndexOf("%2$s")))
-                {
-                    while (using_data.Count < 2)
+                case "black": return "§0";
+                case "dark_blue": return "§1";
+                case "dark_green": return "§2";
+                case "dark_aqua": return "§3";
+                case "dark_red": return "§4";
+                case "dark_purple": return "§5";
+                case "gold": return "§6";
+                case "gray": return "§7";
+                case "dark_gray": return "§8";
+                case "blue": return "§9";
+                case "green": return "§a";
+                case "aqua": return "§b";
+                case "red": return "§c";
+                case "light_purple": return "§d";
+                case "yellow": return "§e";
+                case "white": return "§f";
+                default: return "";
+            }
+        }
+
+        /// <summary>
+        /// Small function for checking if a char is an hexadecimal char (0-9 A-F a-f)
+        /// </summary>
+        /// <param name="c">Char to test</param>
+        /// <returns>True if hexadecimal</returns>
+        private static bool IsHex(char c)
+        {
+            return ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'));
+        }
+
+        /// <summary>
+        /// Use a JSON Object to build the corresponding string
+        /// </summary>
+        /// <param name="data">JSON object to convert</param>
+        /// <returns>returns the Minecraft-formatted string</returns>
+        private static string JSONData2String(JSONData data, string colorcode)
+        {
+            string extraResult = "";
+            switch (data.Type)
+            {
+                case JSONData.DataType.Object:
+                    if (data.Properties.ContainsKey("color"))
                     {
-                        using_data.Add("");
+                        colorcode = Color2Tag(JSONData2String(data.Properties["color"], ""));
+                    }
+                    if (data.Properties.ContainsKey("extra"))
+                    {
+                        JSONData[] extras = data.Properties["extra"].DataArray.ToArray();
+                        foreach (JSONData item in extras)
+                            extraResult = extraResult + JSONData2String(item, colorcode) + "§r";
                     }
 
-                    string tmp = using_data[0];
-                    using_data[0] = using_data[1];
-                    using_data[1] = tmp;
-                }
+                    if (data.Properties.ContainsKey("text"))
+                    {
+                        return colorcode + JSONData2String(data.Properties["text"], colorcode) + extraResult;
+                    }
 
-                string[] syntax = TranslationRules[rulename].Split(new string[] {"%s", "%d", "%1$s", "%2$s"},
-                    StringSplitOptions.None);
+                    else if (data.Properties.ContainsKey("translate"))
+                    {
+                        List<string> usingData = new List<string>();
+                        if (data.Properties.ContainsKey("using") && !data.Properties.ContainsKey("with"))
+                            data.Properties["with"] = data.Properties["using"];
+                        if (data.Properties.ContainsKey("with"))
+                        {
+                            JSONData[] array = data.Properties["with"].DataArray.ToArray();
+                            for (int i = 0; i < array.Length; i++)
+                            {
+                                usingData.Add(JSONData2String(array[i], colorcode));
+                            }
+                        }
+                        return colorcode + TranslateString(JSONData2String(data.Properties["translate"], ""), usingData) + extraResult;
+                    }
+                    else return extraResult;
 
-                while (using_data.Count < syntax.Length - 1)
-                {
-                    using_data.Add("");
-                }
+                case JSONData.DataType.Array:
+                    string result = "";
 
-                string[] using_array = using_data.ToArray();
+                    foreach (JSONData item in data.DataArray)
+                    {
+                        result += JSONData2String(item, colorcode);
+                    }
 
-                string translated = "";
+                    return result;
 
-                for (int i = 0; i < syntax.Length - 1; i++)
-                {
-                    translated += syntax[i];
-                    translated += using_array[i];
-                }
-                translated += syntax[syntax.Length - 1];
-                return translated;
+                case JSONData.DataType.String:
+                    return colorcode + data.StringValue;
             }
-            else return "[" + rulename + "] " + String.Join(" ", using_data.ToArray());
+
+            return "";
         }
 
         /// <summary>
@@ -248,10 +246,10 @@ namespace MinecraftClient
                                 try //Unicode character \u0123
                                 {
                                     if (toparse[cursorpos + 1] == 'u'
-                                        && isHex(toparse[cursorpos + 2])
-                                        && isHex(toparse[cursorpos + 3])
-                                        && isHex(toparse[cursorpos + 4])
-                                        && isHex(toparse[cursorpos + 5]))
+                                        && IsHex(toparse[cursorpos + 2])
+                                        && IsHex(toparse[cursorpos + 3])
+                                        && IsHex(toparse[cursorpos + 4])
+                                        && IsHex(toparse[cursorpos + 5]))
                                     {
                                         //"abc\u0123abc" => "0123" => 0123 => Unicode char n°0123 => Add char to string
                                         data.StringValue += char.ConvertFromUtf32(int.Parse(toparse.Substring(cursorpos + 2, 4), System.Globalization.NumberStyles.HexNumber));
@@ -301,74 +299,87 @@ namespace MinecraftClient
         }
 
         /// <summary>
-        /// Use a JSON Object to build the corresponding string
+        /// Format text using a specific formatting rule.
+        /// Example : * %s %s + ["ORelio", "is doing something"] = * ORelio is doing something
         /// </summary>
-        /// <param name="data">JSON object to convert</param>
-        /// <returns>returns the Minecraft-formatted string</returns>
-        private static string JSONData2String(JSONData data)
+        /// <param name="rulename">Name of the rule, chosen by the server</param>
+        /// <param name="using_data">Data to be used in the rule</param>
+        /// <returns>Returns the formatted text according to the given data</returns>
+        private static string TranslateString(string rulename, List<string> using_data)
         {
-            string extra_result = "";
-            string colorcode = "";
-            switch (data.Type)
+            if (!_init)
             {
-                case JSONData.DataType.Object:
-                    if (data.Properties.ContainsKey("extra"))
-                    {
-                        JSONData[] extras = data.Properties["extra"].DataArray.ToArray();
-                        foreach (JSONData item in extras)
-                            extra_result = extra_result + JSONData2String(item) + "§r";
-                    }
-
-                    if (data.Properties.ContainsKey("color"))
-                    {
-                        colorcode = color2tag(JSONData2String(data.Properties["color"]));
-                    }
-
-                    if (data.Properties.ContainsKey("text"))
-                    {
-                        return extra_result + colorcode + JSONData2String(data.Properties["text"]) + colorcode;
-                    }
-
-                    else if (data.Properties.ContainsKey("translate"))
-                    {
-                        List<string> using_data = new List<string>();
-                        if (data.Properties.ContainsKey("using"))
-                        {
-                            JSONData[] array = data.Properties["using"].DataArray.ToArray();
-                            for (int i = 0; i < array.Length; i++)
-                            {
-                                using_data.Add(JSONData2String(array[i]));
-                            }
-                        }
-                        return extra_result + colorcode + TranslateString(JSONData2String(data.Properties["translate"]), using_data) + colorcode;
-                    }
-                    else return extra_result;
-
-                case JSONData.DataType.Array:
-                    string result = "";
-
-                    foreach (JSONData item in data.DataArray)
-                    {
-                        result += JSONData2String(item);
-                    }
-
-                    return result;
-
-                case JSONData.DataType.String:
-                    return data.StringValue;
+                InitRules();
+                _init = true;
             }
 
-            return "";
+            if (TranslationRules.ContainsKey(rulename))
+            {
+                if ((TranslationRules[rulename].IndexOf("%1$s") >= 0 && TranslationRules[rulename].IndexOf("%2$s") >= 0)
+                    && (TranslationRules[rulename].IndexOf("%1$s") > TranslationRules[rulename].IndexOf("%2$s")))
+                {
+                    while (using_data.Count < 2)
+                    {
+                        using_data.Add("");
+                    }
+
+                    string tmp = using_data[0];
+                    using_data[0] = using_data[1];
+                    using_data[1] = tmp;
+                }
+
+                string[] syntax = TranslationRules[rulename].Split(new string[] { "%s", "%d", "%1$s", "%2$s" },
+                    StringSplitOptions.None);
+
+                while (using_data.Count < syntax.Length - 1)
+                {
+                    using_data.Add("");
+                }
+
+                string[] usingArray = using_data.ToArray();
+
+                string translated = "";
+
+                for (int i = 0; i < syntax.Length - 1; i++)
+                {
+                    translated += syntax[i];
+                    translated += usingArray[i];
+                }
+                translated += syntax[syntax.Length - 1];
+                return translated;
+            }
+            else return "[" + rulename + "] " + String.Join(" ", using_data.ToArray());
         }
 
         /// <summary>
-        /// Small function for checking if a char is an hexadecimal char (0-9 A-F a-f)
+        /// An internal class to store unserialized JSON data
+        /// The data can be an object, an array or a string
         /// </summary>
-        /// <param name="c">Char to test</param>
-        /// <returns>True if hexadecimal</returns>
-        private static bool isHex(char c)
+        private class JSONData
         {
-            return ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'));
+            public readonly List<JSONData> DataArray;
+
+            public readonly Dictionary<string, JSONData> Properties;
+
+            public string StringValue;
+
+            private readonly DataType _type;
+
+            public JSONData(DataType datatype)
+            {
+                _type = datatype;
+                Properties = new Dictionary<string, JSONData>();
+                DataArray = new List<JSONData>();
+                StringValue = String.Empty;
+            }
+
+            public enum DataType
+            {
+                Object,
+                Array,
+                String
+            };
+            public DataType Type { get { return _type; } }
         }
     }
 }

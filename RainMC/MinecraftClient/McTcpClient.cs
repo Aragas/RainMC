@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Net.Sockets;
 using System.Threading;
 using System.IO;
-using System.Net;
-using Rainmeter;
 
 namespace MinecraftClient
 {
@@ -15,26 +11,26 @@ namespace MinecraftClient
     /// </summary>
     class McTcpClient
     {
-        public static int AttemptsLeft = 0;
+        public static int AttemptsLeft;
 
-        string host;
-        int port;
-        string username;
-        string text;
-        Thread t_updater;
-        Thread t_sender;
-        TcpClient client;
-        MinecraftCom handler;
+        string _host;
+        int _port;
+        string _username;
+        string _text;
+        Thread _tUpdater;
+        Thread _tSender;
+        TcpClient _client;
+        MinecraftCom _handler;
 
         /// <summary>
         /// Starts the main chat client, wich will login to the server using the MinecraftCom class.
         /// </summary>
         /// <param name="username">The chosen username of a premium Minecraft Account</param>
         /// <param name="sessionID">A valid sessionID obtained with MinecraftCom.GetLogin()</param>
-        /// <param name="server_port">The server IP (serveradress or serveradress:port)</param>
-        public McTcpClient(string username, string uuid, string sessionID, string server_port, MinecraftCom handler)
+        /// <param name="serverPort">The server IP (serveradress or serveradress:port)</param>
+        public McTcpClient(string username, string uuid, string sessionID, string serverPort, MinecraftCom handler)
         {
-            StartClient(username, uuid, sessionID, server_port, handler);
+            StartClient(username, uuid, sessionID, serverPort, handler);
         }
 
         /// <summary>
@@ -47,56 +43,59 @@ namespace MinecraftClient
         /// <param name="command">The text or command to send. Will only be sent if singlecommand is set to true.</param>
         private void StartClient(string user, string uuid, string sessionID, string server_port, MinecraftCom handler)
         {
-            this.handler = handler;
-            username = user;
+            _handler = handler;
+            _username = user;
             string[] sip = server_port.Split(':');
-            host = sip[0];
+            _host = sip[0];
             if (sip.Length == 1)
             {
-                port = 25565;
+                _port = 25565;
             }
             else
             {
                 try
                 {
-                    port = Convert.ToInt32(sip[1]);
+                    _port = Convert.ToInt32(sip[1]);
                 }
-                catch (FormatException) { port = 25565; }
+                catch (FormatException)
+                {
+                    _port = 25565;
+                }
             }
 
             try
             {
-                API.Log(API.LogType.Warning, "Logging in...");
-                client = new TcpClient(host, port);
-                client.ReceiveBufferSize = 1024 * 1024;
-                handler.setClient(client);
-                if (handler.Login(user, uuid, sessionID, host, port))
+                ConsoleIO.Write("Logging in...");
+
+                _client = new TcpClient(_host, _port) {ReceiveBufferSize = 1024*1024};
+                handler.SetClient(_client);
+
+                if (handler.Login(user, uuid, sessionID, _host, _port))
                 {
                     //Single command sending
 
-                    API.Log(API.LogType.Warning, "Server was successfuly joined.");
-                    API.Log(API.LogType.Warning, "Type '/quit' to leave the server.");
+                    ConsoleIO.Write("Server was successfuly joined.");
+                    ConsoleIO.Write("Type '/quit' to leave the server.");
 
                     //Command sending thread, allowing user input
-                    t_sender = new Thread(new ThreadStart(StartTalk));
-                    t_sender.Name = "CommandSender";
-                    t_sender.Start();
+                    _tSender = new Thread(StartTalk) {Name = "CommandSender"};
+                    _tSender.Start();
 
                     //Data receiving thread, allowing text receiving
-                    t_updater = new Thread(new ThreadStart(Updater));
-                    t_updater.Name = "PacketHandler";
-                    t_updater.Start();
+                    _tUpdater = new Thread(Updater) {Name = "PacketHandler"};
+                    _tUpdater.Start();
 
                 }
                 else
                 {
-                    API.Log(API.LogType.Warning, "Login failed.");
+                    ConsoleIO.Write("Login failed.");
                     MClient.ReadLineReconnect();
                 }
             }
             catch (SocketException)
             {
-                API.Log(API.LogType.Warning, "Failed to connect to this IP.");
+                ConsoleIO.Write("Failed to connect to this IP.");
+
                 if (AttemptsLeft > 0)
                 {
                     ChatBot.LogToConsole("Waiting 5 seconds (" + AttemptsLeft + " attempts left)...");
@@ -113,78 +112,78 @@ namespace MinecraftClient
         {
             try
             {
-                while (client.Client.Connected)
+                while (_client.Client.Connected)
                 {
-                    text = ConsoleIO.ReadLine();
-                    if (ConsoleIO.BasicIO && text.Length > 0 && text[0] == (char)0x00)
+                    _text = ConsoleIO.ReadLine();
+
+                    if (_text.Length > 0 && _text[0] == (char)0x00)
                     {
                         //Process a request from the GUI
-                        string[] command = text.Substring(1).Split((char)0x00);
+                        string[] command = _text.Substring(1).Split((char)0x00);
                         switch (command[0].ToLower())
                         {
                             case "autocomplete":
                                 if (command.Length > 1)
-                                {
-                                    ConsoleIO.Write((char)0x00 + "autocomplete" + (char)0x00 + handler.AutoComplete(command[1]));
-                                }
-                                else Console.Write((char)0x00 + "autocomplete" + (char)0x00);
+                                    ConsoleIO.Write((char)0x00 + "autocomplete" + (char)0x00 + _handler.AutoComplete(command[1]));
+                                
+                                else 
+                                    Console.Write((char)0x00 + "autocomplete" + (char)0x00);
                                 break;
                         }
                     }
                     else
                     {
-                        if (text.ToLower() == "/quit" || text.ToLower().StartsWith("/exec ") ||
-                            text.ToLower() == "/reco" || text.ToLower() == "/reconnect")
-                        {
+                        if (_text.ToLower() == "/quit" || _text.ToLower().StartsWith("/exec ") ||
+                            _text.ToLower() == "/reco" || _text.ToLower() == "/reconnect")
                             break;
-                        }
-                        while (text.Length > 0 && text[0] == ' ')
+                        
+                        while (_text.Length > 0 && _text[0] == ' ')
                         {
-                            text = text.Substring(1);
+                            _text = _text.Substring(1);
                         }
 
-                        if (text != "")
+                        if (_text != "")
                         {
                             //Message is too long
-                            if (text.Length > 100)
+                            if (_text.Length > 100)
                             {
-                                if (text[0] == '/')
+                                if (_text[0] == '/')
                                 {
                                     //Send the first 100 chars of the command
-                                    text = text.Substring(0, 100);
-                                    handler.SendChatMessage(text);
+                                    _text = _text.Substring(0, 100);
+                                    _handler.SendChatMessage(_text);
                                 }
                                 else
                                 {
                                     //Send the message splitted in sereval messages
-                                    while (text.Length > 100)
+                                    while (_text.Length > 100)
                                     {
-                                        handler.SendChatMessage(text.Substring(0, 100));
-                                        text = text.Substring(100, text.Length - 100);
+                                        _handler.SendChatMessage(_text.Substring(0, 100));
+                                        _text = _text.Substring(100, _text.Length - 100);
                                     }
-                                    handler.SendChatMessage(text);
+                                    _handler.SendChatMessage(_text);
                                 }
                             }
-                            else handler.SendChatMessage(text);
+                            else _handler.SendChatMessage(_text);
                         }
                     }
                 }
 
-                if (text.ToLower() == "/quit")
+                if (_text.ToLower() == "/quit")
                 {
                     ConsoleIO.Write("You have left the server.");
                     Disconnect();
                 }
 
-                else if (text.ToLower().StartsWith("/exec ")) {
-                    handler.BotLoad(new Bots.Scripting("config/" + text.Split()[1]));
-                }
+                else if (_text.ToLower().StartsWith("/exec ")) 
+                    _handler.BotLoad(new Bots.Scripting("config/" + _text.Split()[1]));
+                
 
 
-                else if (text.ToLower() == "/reco" || text.ToLower() == "/reconnect")
+                else if (_text.ToLower() == "/reco" || _text.ToLower() == "/reconnect")
                 {
                     ConsoleIO.Write("You have left the server.");
-                    handler.SendRespawnPacket();
+                    _handler.SendRespawnPacket();
                     MClient.Restart();
                 }
             }
@@ -199,22 +198,25 @@ namespace MinecraftClient
         {
             try
             {
-                //handler.DebugDump();
                 do
                 {
                     Thread.Sleep(100);
-                } while (handler.Update());
+                } while (_handler.Update());
             }
             catch (IOException) { }
             catch (SocketException) { }
             catch (ObjectDisposedException) { }
 
-            if (!handler.HasBeenKicked)
+            if (!_handler.HasBeenKicked)
             {
                 ConsoleIO.Write("Connection has been lost.");
-                if (!handler.OnConnectionLost() && !MClient.ReadLineReconnect()) { t_sender.Abort(); }
+
+                if (!_handler.OnConnectionLost() && !MClient.ReadLineReconnect()) 
+                    _tSender.Abort();
             }
-            else if (MClient.ReadLineReconnect()) { t_sender.Abort(); }
+            else if (MClient.ReadLineReconnect())
+                _tSender.Abort();
+           
         }
 
         /// <summary>
@@ -222,11 +224,19 @@ namespace MinecraftClient
         /// </summary>
         public void Disconnect()
         {
-            handler.Disconnect("disconnect.quitting");
+            _handler.Disconnect("disconnect.quitting");
+
             Thread.Sleep(1000);
-            if (t_updater != null) { t_updater.Abort(); }
-            if (t_sender != null) { t_sender.Abort(); }
-            if (client != null) { client.Close(); }
+
+            if (_tUpdater != null)
+                _tUpdater.Abort();
+            
+            if (_tSender != null)
+                _tSender.Abort();
+            
+            if (_client != null)
+                _client.Close();
+            
         }
     }
 }

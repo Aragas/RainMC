@@ -1,10 +1,10 @@
-﻿using System;
-using System.Text;
-using System.Security.Cryptography;
-using java.security;
+﻿using java.security;
 using java.security.spec;
 using javax.crypto;
 using javax.crypto.spec;
+using System;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace MinecraftClient
 {
@@ -13,6 +13,18 @@ namespace MinecraftClient
     /// </summary>
     public class Crypto
     {
+        public static byte[] Encrypt(Key par0Key, byte[] par1ArrayOfByte)
+        {
+            return func_75885_a(1, par0Key, par1ArrayOfByte);
+        }
+
+        public static SecretKey GenerateAESPrivateKey()
+        {
+            RijndaelManaged aes = new RijndaelManaged();
+            aes.KeySize = 128; aes.GenerateKey();
+            return new SecretKeySpec(aes.Key, "AES");
+        }
+
         public static PublicKey GenerateRSAPublicKey(byte[] key)
         {
             X509EncodedKeySpec localX509EncodedKeySpec = new X509EncodedKeySpec(key);
@@ -20,56 +32,17 @@ namespace MinecraftClient
             return localKeyFactory.generatePublic(localX509EncodedKeySpec);
         }
 
-        public static SecretKey GenerateAESPrivateKey()
+        public static byte[] GetServerHash(String toencode, PublicKey par1PublicKey, SecretKey par2SecretKey)
         {
-            RijndaelManaged aes = new RijndaelManaged();
-            aes.KeySize = 128; aes.GenerateKey();
-            return new SecretKeySpec(aes.Key, "AES"); 
+            return Digest("SHA-1", new byte[][] { Encoding.GetEncoding("iso-8859-1").GetBytes(toencode), par2SecretKey.getEncoded(), par1PublicKey.getEncoded() });
         }
 
-        public static byte[] getServerHash(String toencode, PublicKey par1PublicKey, SecretKey par2SecretKey)
+        public static AesStream SwitchToAesMode(System.IO.Stream stream, Key key)
         {
-            return digest("SHA-1", new byte[][] { Encoding.GetEncoding("iso-8859-1").GetBytes(toencode), par2SecretKey.getEncoded(), par1PublicKey.getEncoded() });
+            return new AesStream(stream, key.getEncoded());
         }
 
-        public static byte[] Encrypt(Key par0Key, byte[] par1ArrayOfByte)
-        {
-            return func_75885_a(1, par0Key, par1ArrayOfByte);
-        }
-
-        private static byte[] digest(String par0Str, byte[][] par1ArrayOfByte)
-        {
-            MessageDigest var2 = MessageDigest.getInstance(par0Str);
-            byte[][] var3 = par1ArrayOfByte;
-            int var4 = par1ArrayOfByte.Length;
-
-            for (int var5 = 0; var5 < var4; ++var5)
-            {
-                byte[] var6 = var3[var5];
-                var2.update(var6);
-            }
-
-            return var2.digest();
-        }
-        private static byte[] func_75885_a(int par0, Key par1Key, byte[] par2ArrayOfByte)
-        {
-            try
-            {
-                return cypherencrypt(par0, par1Key.getAlgorithm(), par1Key).doFinal(par2ArrayOfByte);
-            }
-            catch (IllegalBlockSizeException var4)
-            {
-                var4.printStackTrace();
-            }
-            catch (BadPaddingException var5)
-            {
-                var5.printStackTrace();
-            }
-
-            Console.Error.WriteLine("Cipher data failed!");
-            return null;
-        }
-        private static Cipher cypherencrypt(int par0, String par1Str, Key par2Key)
+        private static Cipher Cypherencrypt(int par0, String par1Str, Key par2Key)
         {
             try
             {
@@ -90,13 +63,42 @@ namespace MinecraftClient
                 var6.printStackTrace();
             }
 
-            Console.Error.WriteLine("Cipher creation failed!");
+            ConsoleIO.Write("Cipher creation failed!");
             return null;
         }
 
-        public static AesStream SwitchToAesMode(System.IO.Stream stream, Key key)
+        private static byte[] Digest(String par0Str, byte[][] par1ArrayOfByte)
         {
-            return new AesStream(stream, key.getEncoded());
+            MessageDigest var2 = MessageDigest.getInstance(par0Str);
+            byte[][] var3 = par1ArrayOfByte;
+            int var4 = par1ArrayOfByte.Length;
+
+            for (int var5 = 0; var5 < var4; ++var5)
+            {
+                byte[] var6 = var3[var5];
+                var2.update(var6);
+            }
+
+            return var2.digest();
+        }
+
+        private static byte[] func_75885_a(int par0, Key par1Key, byte[] par2ArrayOfByte)
+        {
+            try
+            {
+                return Cypherencrypt(par0, par1Key.getAlgorithm(), par1Key).doFinal(par2ArrayOfByte);
+            }
+            catch (IllegalBlockSizeException var4)
+            {
+                var4.printStackTrace();
+            }
+            catch (BadPaddingException var5)
+            {
+                var5.printStackTrace();
+            }
+
+            ConsoleIO.Write("Cipher data failed!");
+            return null;
         }
 
         /// <summary>
@@ -104,14 +106,15 @@ namespace MinecraftClient
         /// </summary>
         public class AesStream : System.IO.Stream
         {
-            CryptoStream enc;
-            CryptoStream dec;
+            private readonly CryptoStream dec;
+            private readonly CryptoStream enc;
             public AesStream(System.IO.Stream stream, byte[] key)
             {
                 BaseStream = stream;
                 enc = new CryptoStream(stream, GenerateAES(key).CreateEncryptor(), CryptoStreamMode.Write);
                 dec = new CryptoStream(stream, GenerateAES(key).CreateDecryptor(), CryptoStreamMode.Read);
             }
+
             public System.IO.Stream BaseStream { get; set; }
 
             public override bool CanRead
@@ -127,11 +130,6 @@ namespace MinecraftClient
             public override bool CanWrite
             {
                 get { return true; }
-            }
-
-            public override void Flush()
-            {
-                BaseStream.Flush();
             }
 
             public override long Length
@@ -151,16 +149,19 @@ namespace MinecraftClient
                 }
             }
 
-            public override int ReadByte()
+            public override void Flush()
             {
-                return dec.ReadByte();
+                BaseStream.Flush();
             }
-
             public override int Read(byte[] buffer, int offset, int count)
             {
                 return dec.Read(buffer, offset, count);
             }
 
+            public override int ReadByte()
+            {
+                return dec.ReadByte();
+            }
             public override long Seek(long offset, System.IO.SeekOrigin origin)
             {
                 throw new NotSupportedException();
@@ -171,16 +172,15 @@ namespace MinecraftClient
                 throw new NotSupportedException();
             }
 
-            public override void WriteByte(byte b)
-            {
-                enc.WriteByte(b);
-            }
-
             public override void Write(byte[] buffer, int offset, int count)
             {
                 enc.Write(buffer, offset, count);
             }
 
+            public override void WriteByte(byte b)
+            {
+                enc.WriteByte(b);
+            }
             private RijndaelManaged GenerateAES(byte[] key)
             {
                 RijndaelManaged cipher = new RijndaelManaged();

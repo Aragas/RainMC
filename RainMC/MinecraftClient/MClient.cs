@@ -1,5 +1,4 @@
 ﻿using System;
-using Rainmeter;
 
 namespace MinecraftClient
 {
@@ -38,13 +37,13 @@ namespace MinecraftClient
             // Online or offline mode.
             if (Settings.Password == "-")
             {
-                API.Log(API.LogType.Warning, "You chose to run in offline mode.");
+                ConsoleIO.Write("You chose to run in offline mode.");
                 result = MinecraftCom.LoginResult.Success;
                 sessionID = "0";
             }
             else
             {
-                API.Log(API.LogType.Warning, "Connecting to Minecraft.net...");//
+                ConsoleIO.Write("Connecting to Minecraft.net...");//
                 result = MinecraftCom.GetLogin(ref Settings.Username, Settings.Password, ref sessionID, ref UUID);
             }
 
@@ -52,16 +51,16 @@ namespace MinecraftClient
 
             if (result == MinecraftCom.LoginResult.Success)
             {
-                API.Log(API.LogType.Warning, "Success. (session ID: " + sessionID + ')'); //
+                ConsoleIO.Write("Success. (session ID: " + sessionID + ')'); //
 
                 if (Settings.ServerIP == "")
                 {
-                    API.Log(API.LogType.Warning, "Server IP not written.");
+                    ConsoleIO.Write("Server IP not written.");
                     Settings.ServerIP = "localhost";
                 }
 
                 //Get server version
-                API.Log(API.LogType.Warning, "Retrieving Server Info..."); //
+                ConsoleIO.Write("Retrieving Server Info..."); //
 
                 int protocolversion = 0;
                 string version = "";
@@ -75,10 +74,10 @@ namespace MinecraftClient
                         ChatParser.InitTranslations();
 
                         //Will handle the connection for this client
-                        API.Log(API.LogType.Warning, "Version is supported.");
+                        ConsoleIO.Write("Version is supported.");
                         MinecraftCom handler = new MinecraftCom();
                         ConsoleIO.SetAutoCompleteEngine(handler);
-                        handler.setVersion(protocolversion);
+                        handler.SetVersion(protocolversion);
 
                         #region Bots
 
@@ -124,40 +123,40 @@ namespace MinecraftClient
                     }
                     else
                     {
-                        API.Log(API.LogType.Warning, "Cannot connect to the server : This version is not supported !");
+                        ConsoleIO.Write("Cannot connect to the server : This version is not supported !");
                         ReadLineReconnect();
                     }
                 }
                 else
                 {
-                    API.Log(API.LogType.Warning, "Failed to ping this IP.");
+                    ConsoleIO.Write("Failed to ping this IP.");
                     ReadLineReconnect();
                 }
             }
             else
             {
-                API.Log(API.LogType.Warning, "Connection failed : ");
+                ConsoleIO.Write("Connection failed : ");
 
                 switch (result)
                 {
                     case MinecraftCom.LoginResult.AccountMigrated:
-                        API.Log(API.LogType.Warning, "Account migrated, use e-mail as username.");
+                        ConsoleIO.Write("Account migrated, use e-mail as username.");
                         break;
 
                     case MinecraftCom.LoginResult.Blocked:
-                        API.Log(API.LogType.Warning, "Too many failed logins. Please try again later.");
+                        ConsoleIO.Write("Too many failed logins. Please try again later.");
                         break;
 
                     case MinecraftCom.LoginResult.WrongPassword:
-                        API.Log(API.LogType.Warning, "Incorrect password.");
+                        ConsoleIO.Write("Incorrect password.");
                         break;
 
                     case MinecraftCom.LoginResult.NotPremium:
-                        API.Log(API.LogType.Warning, "User not premium.");
+                        ConsoleIO.Write("User not premium.");
                         break;
 
                     case MinecraftCom.LoginResult.Error:
-                        API.Log(API.LogType.Warning, "Network error.");
+                        ConsoleIO.Write("Network error.");
                         break;
                 }
 
@@ -193,7 +192,7 @@ namespace MinecraftClient
 
             if (text == "reco" || text == "reconnect" || text == "/reco" || text == "/reconnect")
             {
-                MClient.Restart();
+                Restart();
                 return true;
             }
             return false;
@@ -209,7 +208,7 @@ namespace MinecraftClient
                 Client.Disconnect(); 
             }
 
-            API.Log(API.LogType.Warning, "Restarting Minecraft Console Client...");
+            ConsoleIO.Write("Restarting Minecraft Console Client...");
             InitializeClient();
         }
 
