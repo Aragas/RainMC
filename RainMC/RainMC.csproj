@@ -88,41 +88,13 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="IKVM.OpenJDK.Core, Version=7.0.4335.0, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\IKVM.OpenJDK.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="IKVM.OpenJDK.Security, Version=7.0.4335.0, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\IKVM.OpenJDK.Security.dll</HintPath>
-    </Reference>
-    <Reference Include="IKVM.OpenJDK.Util, Version=7.0.4335.0, Culture=neutral, PublicKeyToken=13235d27fcbfff58, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\IKVM.OpenJDK.Util.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Core, Version=3.5.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>lib\System.Core.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MinecraftClient\Bots.cs" />
-    <Compile Include="MinecraftClient\ConsoleIO.cs" />
-    <Compile Include="MinecraftClient\Crypto.cs" />
-    <Compile Include="MinecraftClient\ChatParser.cs" />
     <Compile Include="Measure.cs" />
-    <Compile Include="MinecraftClient\MinecraftCom.cs" />
-    <Compile Include="MinecraftClient\MClient.cs" />
+    <Compile Include="MinecraftClient\MinecraftClient.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="MinecraftClient\McTcpClient.cs" />
-    <Compile Include="MinecraftClient\Settings.cs" />
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <Compile Include="Rainmeter\Plugin.cs" />
     <Compile Include="Rainmeter\RainmeterAPI.cs" />
   </ItemGroup>
@@ -149,18 +121,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="lib\IKVM.OpenJDK.Core.dll" />
-    <Content Include="lib\IKVM.OpenJDK.Security.dll" />
-    <Content Include="lib\IKVM.OpenJDK.Util.dll" />
-    <Content Include="lib\IKVM.Runtime.dll" />
-    <Content Include="lib\System.Core.dll" />
     <Content Include="Rainmeter\DllExporter.exe" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Properties\Resources.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
