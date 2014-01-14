@@ -4,7 +4,7 @@ using System.Text;
 using System.IO;
 using System.Diagnostics;
 using System.Threading;
-using Rainmeter;
+using Plugin;
 
 namespace MinecraftClientGUI
 {

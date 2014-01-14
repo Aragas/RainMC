@@ -1,21 +1,22 @@
-﻿using System;
+﻿using MinecraftClientGUI;
+using Rainmeter;
+using System;
 using System.Collections.Generic;
-using MinecraftClientGUI;
 
-namespace Rainmeter
+namespace Plugin
 {
     /// <summary>
     /// Main part of Measure.
     /// </summary>
     internal class Measure
     {
-        static List<string> History = new List<string>();
+        public static string Path { get; private set; }
+
+        private static List<string> History = new List<string>();
 
         private static string Username = "";
         private static string Password = "";
         private static string ServerIP = "";
-
-        public static string Path { get; private set; }
 
         private static MinecraftClient MC;
 
@@ -210,79 +211,37 @@ namespace Rainmeter
                         {
                             case CountType.One:
                                 try { return History[0]; }
-                                catch (Exception ex)
-                                {
-                                    if (ex is ArgumentOutOfRangeException)
-                                        break;
-                                    
-                                    throw;
-                                }
+                                catch (ArgumentOutOfRangeException) {}
                                 break;
 
                             case CountType.Two:
                                 try { return History[1]; }
-                                catch (Exception ex)
-                                {
-                                    if (ex is ArgumentOutOfRangeException)
-                                        break;
-
-                                    throw;
-                                }
+                                catch (ArgumentOutOfRangeException) { }
                                 break;
 
                             case CountType.Three:
                                 try { return History[2]; }
-                                catch (Exception ex)
-                                {
-                                    if (ex is ArgumentOutOfRangeException)
-                                        break;
-
-                                    throw;
-                                }
+                                catch (ArgumentOutOfRangeException) { }
                                 break;
 
                             case CountType.Four:
                                 try { return History[3]; }
-                                catch (Exception ex)
-                                {
-                                    if (ex is ArgumentOutOfRangeException)
-                                        break;
-
-                                    throw;
-                                }
+                                catch (ArgumentOutOfRangeException) { }
                                 break;
 
                             case CountType.Five:
                                 try { return History[4]; }
-                                catch (Exception ex)
-                                {
-                                    if (ex is ArgumentOutOfRangeException)
-                                        break;
-
-                                    throw;
-                                }
+                                catch (ArgumentOutOfRangeException) { }
                                 break;
 
                             case CountType.Six:
                                 try { return History[5]; }
-                                catch (Exception ex)
-                                {
-                                    if (ex is ArgumentOutOfRangeException)
-                                        break;
-
-                                    throw;
-                                }
+                                catch (ArgumentOutOfRangeException) { }
                                 break;
 
                             case CountType.Seven:
                                 try { return History[6]; }
-                                catch (Exception ex)
-                                {
-                                    if (ex is ArgumentOutOfRangeException)
-                                        break;
-
-                                    throw;
-                                }
+                                catch (ArgumentOutOfRangeException) { }
                                 break;
                         }
                     }
