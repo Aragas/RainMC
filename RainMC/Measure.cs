@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using MinecraftClientGUI;
-using MinecraftClient = MinecraftClientGUI.MinecraftClient;
 
 namespace Rainmeter
 {
@@ -9,11 +9,13 @@ namespace Rainmeter
     /// </summary>
     internal class Measure
     {
+        static List<string> History = new List<string>();
+
         private static string Username = "";
         private static string Password = "";
         private static string ServerIP = "";
 
-        public static string Path = "";
+        public static string Path { get; private set; }
 
         private static MinecraftClient MC;
 
@@ -23,6 +25,18 @@ namespace Rainmeter
             Answer
         }
         private MeasureType _type;
+
+        internal enum CountType
+        {
+            One,
+            Two,
+            Three,
+            Four,
+            Five,
+            Six,
+            Seven
+        }
+        private CountType _countType;
 
         /// <summary>
         /// Called when Rainmeter is launched. Just once.
@@ -53,6 +67,39 @@ namespace Rainmeter
 
                 case "ANSWER":
                     _type = MeasureType.Answer;
+
+                    int counttype = api.ReadInt("Count", 1);
+                    switch (counttype)
+                    {
+                        case 1:
+                            _countType = CountType.One;
+                            break;
+
+                        case 2:
+                            _countType = CountType.Two;
+                            break;
+
+                        case 3:
+                            _countType = CountType.Three;
+                            break;
+
+                        case 4:
+                            _countType = CountType.Four;
+                            break;
+
+                        case 5:
+                            _countType = CountType.Five;
+                            break;
+
+                        case 6:
+                            _countType = CountType.Six;
+                            break;
+
+                        case 7:
+                            _countType = CountType.Seven;
+                            break;
+                    }
+
                     break;
 
                 case "LOGIN":
@@ -77,6 +124,16 @@ namespace Rainmeter
         /// <param name="maxValue">Max Value</param>
         internal void Reload(Rainmeter.API api, ref double maxValue)
         {
+            if (MC != null && !MC.Disconnected)
+            {
+                string s = MC.Read();
+                if (!String.IsNullOrEmpty(s))
+                {
+                    History.Insert(0, s);
+                }
+
+            }
+
             string type = api.ReadString("Type", "");
 
             switch (type.ToUpperInvariant())
@@ -84,6 +141,39 @@ namespace Rainmeter
 
                 case "ANSWER":
                     _type = MeasureType.Answer;
+
+                    int countType = api.ReadInt("Count", 1);
+                    switch (countType)
+                    {
+                        case 1:
+                            _countType = CountType.One;
+                            break;
+
+                        case 2:
+                            _countType = CountType.Two;
+                            break;
+
+                        case 3:
+                            _countType = CountType.Three;
+                            break;
+
+                        case 4:
+                            _countType = CountType.Four;
+                            break;
+
+                        case 5:
+                            _countType = CountType.Five;
+                            break;
+
+                        case 6:
+                            _countType = CountType.Six;
+                            break;
+
+                        case 7:
+                            _countType = CountType.Seven;
+                            break;
+                    }
+
                     break;
 
                 case "LOGIN":
@@ -113,14 +203,92 @@ namespace Rainmeter
             switch (_type)
             {
                 case MeasureType.Answer:
-                    if (MC != null)
-                        return MC.ReadLine();
-                    //switch (_countType)
-                    //{
-                    //}
+
+                    if (MC != null && !MC.Disconnected)
+                    {
+                        switch (_countType)
+                        {
+                            case CountType.One:
+                                try { return History[0]; }
+                                catch (Exception ex)
+                                {
+                                    if (ex is ArgumentOutOfRangeException)
+                                        break;
+                                    
+                                    throw;
+                                }
+                                break;
+
+                            case CountType.Two:
+                                try { return History[1]; }
+                                catch (Exception ex)
+                                {
+                                    if (ex is ArgumentOutOfRangeException)
+                                        break;
+
+                                    throw;
+                                }
+                                break;
+
+                            case CountType.Three:
+                                try { return History[2]; }
+                                catch (Exception ex)
+                                {
+                                    if (ex is ArgumentOutOfRangeException)
+                                        break;
+
+                                    throw;
+                                }
+                                break;
+
+                            case CountType.Four:
+                                try { return History[3]; }
+                                catch (Exception ex)
+                                {
+                                    if (ex is ArgumentOutOfRangeException)
+                                        break;
+
+                                    throw;
+                                }
+                                break;
+
+                            case CountType.Five:
+                                try { return History[4]; }
+                                catch (Exception ex)
+                                {
+                                    if (ex is ArgumentOutOfRangeException)
+                                        break;
+
+                                    throw;
+                                }
+                                break;
+
+                            case CountType.Six:
+                                try { return History[5]; }
+                                catch (Exception ex)
+                                {
+                                    if (ex is ArgumentOutOfRangeException)
+                                        break;
+
+                                    throw;
+                                }
+                                break;
+
+                            case CountType.Seven:
+                                try { return History[6]; }
+                                catch (Exception ex)
+                                {
+                                    if (ex is ArgumentOutOfRangeException)
+                                        break;
+
+                                    throw;
+                                }
+                                break;
+                        }
+                    }
                     break;
 
-            }
+                }
             return null;
         }
 

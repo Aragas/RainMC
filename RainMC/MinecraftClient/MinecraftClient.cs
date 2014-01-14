@@ -15,7 +15,7 @@ namespace MinecraftClientGUI
 
     class MinecraftClient
     {
-        public static string ExePath = "MinecraftClient.exe";
+        public static string ExePath = Measure.Path + "MinecraftClient.exe";
         public bool Disconnected { get { return disconnected; } }
 
         private LinkedList<string> OutputBuffer = new LinkedList<string>();
@@ -50,12 +50,12 @@ namespace MinecraftClientGUI
         /// <param name="arguments">Arguments to pass</param>
         private void initClient(string arguments)
         {
-            if (File.Exists(Measure.Path + ExePath))
+            if (File.Exists(ExePath))
             {
                 Client = new Process();
                 Client.StartInfo.FileName = ExePath;
                 Client.StartInfo.Arguments = arguments;
-                Client.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                Client.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
                 Client.StartInfo.StandardOutputEncoding = Encoding.GetEncoding(850);
                 Client.StartInfo.UseShellExecute = false;
                 Client.StartInfo.RedirectStandardOutput = true;
@@ -63,7 +63,7 @@ namespace MinecraftClientGUI
                 Client.StartInfo.CreateNoWindow = true;
                 Client.Start();
 
-                Reader = new Thread(new ThreadStart(t_reader));
+                Reader = new Thread(t_reader) {Name = "InputReader"};
                 Reader.Start();
             }
             else throw new FileNotFoundException("Cannot find Minecraft Client Executable!", Measure.Path + ExePath);
@@ -82,8 +82,8 @@ namespace MinecraftClientGUI
                     while (line.Trim() == "")
                     {
                         line = Client.StandardOutput.ReadLine() + Client.MainWindowTitle;
-                        if (line == "Server was successfuly joined.") { disconnected = false; }
-                        if (line == "You have left the server.") { disconnected = true; }
+                        if (line == "Server was successfuly joined.") { disconnected = false;}
+                        if (line == "You have left the server.") { disconnected = true;}
                         if (line[0] == (char)0x00)
                         {
                             //App message from the console
@@ -113,6 +113,21 @@ namespace MinecraftClientGUI
             string line = OutputBuffer.First.Value;
             OutputBuffer.RemoveFirst();
             return line;
+        }
+
+        /// <summary>
+        /// Get the first queuing output line to print
+        /// </summary>
+        /// <returns></returns>
+        public string Read()
+        {
+            if (OutputBuffer.Count >= 1)
+            {
+                string line = OutputBuffer.First.Value;
+                OutputBuffer.RemoveFirst();
+                return line;
+            }
+            return null;
         }
 
         /// <summary>
