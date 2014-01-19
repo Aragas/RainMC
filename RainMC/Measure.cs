@@ -18,25 +18,12 @@ namespace Plugin
         private static string Password = "";
         private static string ServerIP = "";
 
-        private static MinecraftClient MC;
+        private static MinecraftClient Client;
 
-        internal enum MeasureType
-        {
-            Login,
-            Answer
-        }
+        private enum MeasureType { Login, Answer }
         private MeasureType _type;
 
-        internal enum CountType
-        {
-            One,
-            Two,
-            Three,
-            Four,
-            Five,
-            Six,
-            Seven
-        }
+        private enum CountType { One, Two, Three, Four, Five, Six, Seven }
         private CountType _countType;
 
         /// <summary>
@@ -62,48 +49,15 @@ namespace Plugin
             }
 
             string type = api.ReadString("Type", "");
-
             switch (type.ToUpperInvariant())
             {
 
                 case "ANSWER":
-                    _type = MeasureType.Answer;
-
-                    int counttype = api.ReadInt("Count", 1);
-                    switch (counttype)
-                    {
-                        case 1:
-                            _countType = CountType.One;
-                            break;
-
-                        case 2:
-                            _countType = CountType.Two;
-                            break;
-
-                        case 3:
-                            _countType = CountType.Three;
-                            break;
-
-                        case 4:
-                            _countType = CountType.Four;
-                            break;
-
-                        case 5:
-                            _countType = CountType.Five;
-                            break;
-
-                        case 6:
-                            _countType = CountType.Six;
-                            break;
-
-                        case 7:
-                            _countType = CountType.Seven;
-                            break;
-                    }
-
                     break;
 
                 case "LOGIN":
+                    _type = MeasureType.Login;
+
                     Username = api.ReadString("Username", "ChatBot");
                     Password = api.ReadString("Password", "-");
                     ServerIP = api.ReadString("ServerIP", "localhost");
@@ -125,62 +79,34 @@ namespace Plugin
         /// <param name="maxValue">Max Value</param>
         internal void Reload(Rainmeter.API api, ref double maxValue)
         {
-            if (MC != null && !MC.Disconnected)
+            if (Client != null && !Client.Disconnected)
             {
-                string s = MC.Read();
-                if (!String.IsNullOrEmpty(s))
-                {
-                    History.Insert(0, s);
-                }
-
+                string console = Client.FormatString(Client.Read());
+                if (!String.IsNullOrEmpty(console))
+                    History.Insert(0, console);
             }
 
             string type = api.ReadString("Type", "");
-
             switch (type.ToUpperInvariant())
             {
-
                 case "ANSWER":
                     _type = MeasureType.Answer;
 
                     int countType = api.ReadInt("Count", 1);
                     switch (countType)
                     {
-                        case 1:
-                            _countType = CountType.One;
-                            break;
-
-                        case 2:
-                            _countType = CountType.Two;
-                            break;
-
-                        case 3:
-                            _countType = CountType.Three;
-                            break;
-
-                        case 4:
-                            _countType = CountType.Four;
-                            break;
-
-                        case 5:
-                            _countType = CountType.Five;
-                            break;
-
-                        case 6:
-                            _countType = CountType.Six;
-                            break;
-
-                        case 7:
-                            _countType = CountType.Seven;
-                            break;
+                        case 1: _countType = CountType.One; break;
+                        case 2: _countType = CountType.Two; break;
+                        case 3: _countType = CountType.Three; break;
+                        case 4: _countType = CountType.Four; break;
+                        case 5: _countType = CountType.Five; break;
+                        case 6: _countType = CountType.Six; break;
+                        case 7: _countType = CountType.Seven; break;
                     }
 
                     break;
 
                 case "LOGIN":
-                    Username = api.ReadString("Username", "ChatBot");
-                    Password = api.ReadString("Password", "-");
-                    ServerIP = api.ReadString("ServerIP", "localhost");
                     break;
 
                 default:
@@ -194,7 +120,7 @@ namespace Plugin
         /// Called on every update cycle (usually once per second).
         /// </summary>
         /// <returns>Return the numerical value for the measure here.</returns>
-        internal double Update()
+        internal double GetDouble()
         {
             return 0.0;
         }
@@ -205,7 +131,7 @@ namespace Plugin
             {
                 case MeasureType.Answer:
 
-                    if (MC != null && !MC.Disconnected)
+                    if (Client != null && !Client.Disconnected)
                     {
                         switch (_countType)
                         {
@@ -255,36 +181,36 @@ namespace Plugin
         /// Called by Rainmeter when a !CommandMeasure bang is sent to the measure.
         /// </summary>
         /// <param name="command">String containing the arguments to parse.</param>
-        internal void ExecuteBang(string command)
+        internal static void ExecuteBang(string command)
         {
             if (command.ToUpperInvariant() == "START")
             {
-                if (MC == null)
-                    MC = new MinecraftClient(Username, Password, ServerIP);
+                if (Client == null)
+                    Client = new MinecraftClient(Username, Password, ServerIP);
             }
                 
             else if (command.ToUpperInvariant() == "RESTART")
             {
-                if (MC != null)
+                if (Client != null)
                 {
-                    MC.Close();
-                    MC = new MinecraftClient(Username, Password, ServerIP);
+                    Client.Close();
+                    Client = new MinecraftClient(Username, Password, ServerIP);
                 }
             }
 
             else if (command.ToUpperInvariant() == "EXIT")
             {
-                if (MC != null)
+                if (Client != null)
                 {
-                    MC.Close();
-                    MC = null;
+                    Client.Close();
+                    Client = null;
                 }
             }
 
             else if (command.StartsWith("Text:"))
             {
-                if (MC != null)
-                    MC.SendText(command.Substring(5));
+                if (Client != null)
+                    Client.SendText(command.Substring(5));
             }
 
             else
@@ -298,6 +224,9 @@ namespace Plugin
         /// </summary>
         internal void Finalize()
         {
+            History.Clear();
+            if (Client != null)
+                Client.Close();
         }
 
     }

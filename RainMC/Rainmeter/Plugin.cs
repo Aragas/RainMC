@@ -28,7 +28,7 @@ namespace Rainmeter
         public static unsafe double Update(void* data)
         {
             var id = (uint)data;
-            return Measures[id].Update();
+            return Measures[id].GetDouble();
         }
 
         [DllExport]
@@ -42,7 +42,7 @@ namespace Rainmeter
         public static unsafe void ExecuteBang(void* data, char* args)
         {
             var id = (uint)data;
-            Measures[id].ExecuteBang(new string(args));
+            Measure.ExecuteBang(new string(args));
         }
 
         [DllExport]
