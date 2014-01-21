@@ -1,4 +1,4 @@
-﻿using MinecraftClientAPI;
+﻿using MinecraftClient;
 using Rainmeter;
 using System;
 using System.Collections.Generic;
@@ -17,7 +17,7 @@ namespace Plugin
         private static string ServerIP = "";
         private static string Path = "";
 
-        private static MinecraftClient Client;
+        private static Wrapper _wrapper;
 
         private enum MeasureType { Login, Answer }
         private MeasureType _type;
@@ -78,9 +78,9 @@ namespace Plugin
         /// <param name="maxValue">Max Value</param>
         internal void Reload(Rainmeter.API api, ref double maxValue)
         {
-            if (Client != null && !Client.Disconnected)
+            if (_wrapper != null && !_wrapper.Disconnected)
             {
-                string console = Client.FormatString(Client.Read());
+                string console = _wrapper.ReadLine();
                 if (!String.IsNullOrEmpty(console))
                     History.Insert(0, console);
             }
@@ -130,7 +130,7 @@ namespace Plugin
             {
                 case MeasureType.Answer:
 
-                    if (Client != null && !Client.Disconnected)
+                    if (_wrapper != null && !_wrapper.Disconnected)
                     {
                         switch (_countType)
                         {
@@ -184,32 +184,32 @@ namespace Plugin
         {
             if (command.ToUpperInvariant() == "START")
             {
-                if (Client == null)
-                    Client = new MinecraftClient(Username, Password, ServerIP, Path);
+                if (_wrapper == null)
+                    _wrapper = new Wrapper(Username, Password, ServerIP, Path);
             }
                 
             else if (command.ToUpperInvariant() == "RESTART")
             {
-                if (Client != null)
+                if (_wrapper != null)
                 {
-                    Client.Dispose();
-                    Client = new MinecraftClient(Username, Password, ServerIP, Path);
+                    _wrapper.Dispose();
+                    _wrapper = new Wrapper(Username, Password, ServerIP, Path);
                 }
             }
 
             else if (command.ToUpperInvariant() == "EXIT")
             {
-                if (Client != null)
+                if (_wrapper != null)
                 {
-                    Client.Dispose();
-                    Client = null;
+                    _wrapper.Dispose();
+                    _wrapper = null;
                 }
             }
 
             else if (command.StartsWith("Text:"))
             {
-                if (Client != null)
-                    Client.SendText(command.Substring(5));
+                if (_wrapper != null)
+                    _wrapper.SendText(command.Substring(5));
             }
 
             else
@@ -224,8 +224,8 @@ namespace Plugin
         internal void Finalize()
         {
             History.Clear();
-            if (Client != null)
-                Client.Dispose();
+            if (_wrapper != null)
+                _wrapper.Dispose();
         }
 
     }

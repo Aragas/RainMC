@@ -4,15 +4,14 @@ using System.Globalization;
 using System.Text;
 using System.IO;
 using System.Diagnostics;
-using System.Threading;
 
-namespace MinecraftClientAPI
+namespace MinecraftClient
 {
     /// <summary>
     /// This class acts as a wrapper for MinecraftClient.exe
     /// Allows the rest of the program to consider this class as the Minecraft client itself.
     /// </summary>
-    internal sealed class MinecraftClient : IDisposable
+    internal sealed class Wrapper : IDisposable
     {
         public bool Disconnected { get; private set; }
 
@@ -23,9 +22,13 @@ namespace MinecraftClientAPI
         private readonly LinkedList<string> _outputBuffer = new LinkedList<string>();
 
         private Process _client;
-        private Thread _reader;
 
         private bool _disposed;
+
+        public Wrapper(string[] args)
+        {
+            InitClient("\"" + String.Join("\" \"", args) + "\" BasicIO");
+        }
 
         /// <summary>
         /// Start the client using username, password and server IP
@@ -33,8 +36,22 @@ namespace MinecraftClientAPI
         /// <param name="username">Username or email</param>
         /// <param name="password">Password for the given username</param>
         /// <param name="serverIp">Server IP to join</param>
+        public Wrapper(string username, string password, string serverIp)
+        {
+            FolderPath = "";
+            ExePath = FolderPath + ExeName;
+
+            InitClient('"' + username + "\" \"" + password + "\" \"" + serverIp + "\" BasicIO");
+        }
+
+        /// <summary>
+        /// Start the client using username, password, server IP and folder path
+        /// </summary>
+        /// <param name="username">Username or email</param>
+        /// <param name="password">Password for the given username</param>
+        /// <param name="serverIp">Server IP to join</param>
         /// <param name="folderPath">Path to the exe file</param>
-        public MinecraftClient(string username, string password, string serverIp, string folderPath)
+        public Wrapper(string username, string password, string serverIp, string folderPath)
         {
             FolderPath = folderPath;
             ExePath = FolderPath + ExeName;
@@ -71,29 +88,11 @@ namespace MinecraftClientAPI
             else throw new FileNotFoundException("Cannot find Minecraft Client Executable!", ExePath);
         }
 
-        private void _client_OutputDataReceived(object sender, DataReceivedEventArgs e)
-        {
-            if (!String.IsNullOrEmpty(e.Data))
-            {
-                var line = e.Data;
-                switch (line.Trim())
-                {
-                    case "Server was successfully joined.":
-                        Disconnected = false;
-                        break;
-                    case "You have left the server.":
-                        Disconnected = true;
-                        break;
-                }
-                _outputBuffer.AddLast(line);
-            }
-        }
-
         /// <summary>
-        /// Get the first queuing output line to print.
+        /// Get the first queuing output line to print in raw format.
         /// </summary>
-        /// <returns>Console Output</returns>
-        public string Read()
+        /// <returns>Raw MinecraftClient output</returns>
+        public string ReadLineRaw()
         {
             if (_outputBuffer.Count >= 1)
             {
@@ -105,11 +104,13 @@ namespace MinecraftClientAPI
         }
 
         /// <summary>
-        /// Print a Minecraft-Formatted string to the console area
+        /// Get the first queuing output line to print.
         /// </summary>
-        /// <param name="str">String to print</param>
-        public string FormatString(string str)
+        /// <returns>MinecraftClient output</returns>
+        public string ReadLine()
         {
+            var str = ReadLineRaw();
+
             if (!String.IsNullOrEmpty(str))
             {
                 string line = "";
@@ -143,6 +144,24 @@ namespace MinecraftClientAPI
             }
         }
 
+        private void _client_OutputDataReceived(object sender, DataReceivedEventArgs e)
+        {
+            if (!String.IsNullOrEmpty(e.Data))
+            {
+                var line = e.Data;
+                switch (line.Trim())
+                {
+                    case "Server was successfully joined.":
+                        Disconnected = false;
+                        break;
+                    case "You have left the server.":
+                        Disconnected = true;
+                        break;
+                }
+                _outputBuffer.AddLast(line);
+            }
+        }
+
 
         /// <summary>
         /// Properly disconnect from the server and dispose the client
@@ -169,7 +188,7 @@ namespace MinecraftClientAPI
             }
         }
 
-        ~MinecraftClient()
+        ~Wrapper()
         {
             Dispose(false);
         }

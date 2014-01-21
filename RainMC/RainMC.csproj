@@ -93,7 +93,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Measure.cs" />
-    <Compile Include="MinecraftClientAPI\MinecraftClient.cs" />
+    <Compile Include="MinecraftClientAPI\Wrapper.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Rainmeter\Plugin.cs" />
     <Compile Include="Rainmeter\RainmeterAPI.cs" />
