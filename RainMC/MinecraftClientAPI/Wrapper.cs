@@ -5,7 +5,7 @@ using System.Text;
 using System.IO;
 using System.Diagnostics;
 
-namespace MinecraftClient
+namespace MinecraftClientAPI
 {
     /// <summary>
     /// This class acts as a wrapper for MinecraftClient.exe
