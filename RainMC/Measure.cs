@@ -10,13 +10,12 @@ namespace Plugin
     /// </summary>
     internal class Measure
     {
-        public static string Path { get; private set; }
-
         private static List<string> History = new List<string>();
 
         private static string Username = "";
         private static string Password = "";
         private static string ServerIP = "";
+        private static string Path = "";
 
         private static MinecraftClient Client;
 
@@ -186,15 +185,15 @@ namespace Plugin
             if (command.ToUpperInvariant() == "START")
             {
                 if (Client == null)
-                    Client = new MinecraftClient(Username, Password, ServerIP);
+                    Client = new MinecraftClient(Username, Password, ServerIP, Path);
             }
                 
             else if (command.ToUpperInvariant() == "RESTART")
             {
                 if (Client != null)
                 {
-                    Client.Close();
-                    Client = new MinecraftClient(Username, Password, ServerIP);
+                    Client.Dispose();
+                    Client = new MinecraftClient(Username, Password, ServerIP, Path);
                 }
             }
 
@@ -202,7 +201,7 @@ namespace Plugin
             {
                 if (Client != null)
                 {
-                    Client.Close();
+                    Client.Dispose();
                     Client = null;
                 }
             }
@@ -226,7 +225,7 @@ namespace Plugin
         {
             History.Clear();
             if (Client != null)
-                Client.Close();
+                Client.Dispose();
         }
 
     }
