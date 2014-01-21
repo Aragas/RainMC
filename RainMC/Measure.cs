@@ -1,4 +1,4 @@
-﻿using MinecraftClientGUI;
+﻿using MinecraftClientAPI;
 using Rainmeter;
 using System;
 using System.Collections.Generic;

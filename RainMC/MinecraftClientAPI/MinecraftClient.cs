@@ -6,7 +6,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Threading;
 
-namespace MinecraftClientGUI
+namespace MinecraftClientAPI
 {
     /// <summary>
     /// This class acts as a wrapper for MinecraftClient.exe
@@ -45,8 +45,8 @@ namespace MinecraftClientGUI
         /// <summary>
         /// Inner function for launching the external console application
         /// </summary>
-        /// <param name="arguments">Arguments to pass</param>
-        private void InitClient(string arguments)
+        /// <param name="args">Arguments to pass</param>
+        private void InitClient(string args)
         {
             if (File.Exists(ExePath))
             {
@@ -55,7 +55,7 @@ namespace MinecraftClientGUI
                     StartInfo =
                     {
                         FileName = ExePath,
-                        Arguments = arguments,
+                        Arguments = args,
                         WindowStyle = ProcessWindowStyle.Hidden,
                         UseShellExecute = false,
                         RedirectStandardOutput = true,
@@ -64,37 +64,28 @@ namespace MinecraftClientGUI
                         StandardOutputEncoding = Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.ANSICodePage)
                     }
                 };
+                _client.OutputDataReceived += _client_OutputDataReceived;
                 _client.Start();
-
-                _reader = new Thread(t_reader) {Name = "InputReader"};
-                _reader.Start();
+                _client.BeginOutputReadLine();
             }
             else throw new FileNotFoundException("Cannot find Minecraft Client Executable!", ExePath);
         }
 
-        /// <summary>
-        /// Thread for reading output and app messages from the console
-        /// </summary>
-        private void t_reader()
+        private void _client_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
-            while (true)
+            if (!String.IsNullOrEmpty(e.Data))
             {
-                string line = null;
-                while (String.IsNullOrEmpty(line))
+                var line = e.Data;
+                switch (line.Trim())
                 {
-                    line = _client.StandardOutput.ReadLine() + _client.MainWindowTitle;
-                    switch (line.Trim())
-                    {
-                        case "Server was successfully joined.":
-                            Disconnected = false;
-                            break;
-                        case "You have left the server.":
-                            Disconnected = true;
-                            break;
-                    }
-                    _outputBuffer.AddLast(line);
+                    case "Server was successfully joined.":
+                        Disconnected = false;
+                        break;
+                    case "You have left the server.":
+                        Disconnected = true;
+                        break;
                 }
-
+                _outputBuffer.AddLast(line);
             }
         }
 
@@ -170,9 +161,6 @@ namespace MinecraftClientGUI
                 {
                     _client.StandardInput.WriteLine("/quit");
 
-                    if (_reader.IsAlive)
-                        _reader.Abort();
-                    
                     if (!_client.WaitForExit(1000))
                         _client.Kill();
                     
