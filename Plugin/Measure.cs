@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Runtime.InteropServices;
 using MinecraftClientAPI;
 using Rainmeter;
 using System;
@@ -6,9 +7,6 @@ using System.Collections.Generic;
 
 namespace Plugin
 {
-    /// <summary>
-    /// Main part of Measure.
-    /// </summary>
     internal class Measure
     {
         private static readonly List<string> History = new List<string>();
@@ -27,19 +25,11 @@ namespace Plugin
         private CountType _countType;
 
         /// <summary>
-        /// Called when Rainmeter is launched. Just once.
-        /// Is called before skin gets data.
-        /// </summary>
-        public Measure()
-        {
-        }
-
-        /// <summary>
         /// Called when a measure is created (i.e. when Rainmeter is launched or when a skin is refreshed).
         /// Initialize your measure object here.
         /// </summary>
         /// <param name="api">Rainmeter API</param>
-        internal void Initialize(Rainmeter.API api)
+        public Measure(Rainmeter.API api)
         {
             if (String.IsNullOrEmpty(Path))
             {
@@ -130,7 +120,7 @@ namespace Plugin
                         {
                             case CountType.One:
                                 try { return History[0]; }
-                                catch (ArgumentOutOfRangeException) {}
+                                catch (ArgumentOutOfRangeException) { }
                                 break;
 
                             case CountType.Two:
@@ -166,7 +156,7 @@ namespace Plugin
                     }
                     break;
 
-                }
+            }
             return null;
         }
 
@@ -174,9 +164,9 @@ namespace Plugin
         /// Called by Rainmeter when a !CommandMeasure bang is sent to the measure.
         /// </summary>
         /// <param name="command">String containing the arguments to parse.</param>
-        internal static void ExecuteBang(string command)
+        internal void ExecuteBang(string args)
         {
-            if (command.ToUpperInvariant() == "START")
+            if (args.ToUpperInvariant() == "START")
             {
                 if (_wrapper == null)
                 {
@@ -184,8 +174,8 @@ namespace Plugin
                     _wrapper.DataReceived += _wrapper_DataReceived;
                 }
             }
-                
-            else if (command.ToUpperInvariant() == "RESTART")
+
+            else if (args.ToUpperInvariant() == "RESTART")
             {
                 if (_wrapper != null)
                 {
@@ -196,7 +186,7 @@ namespace Plugin
                 }
             }
 
-            else if (command.ToUpperInvariant() == "EXIT")
+            else if (args.ToUpperInvariant() == "EXIT")
             {
                 if (_wrapper != null)
                 {
@@ -207,14 +197,14 @@ namespace Plugin
                 History.Clear();
             }
 
-            else if (command.ToUpperInvariant().StartsWith("TEXT:"))
+            else if (args.ToUpperInvariant().StartsWith("TEXT:"))
             {
                 if (_wrapper != null)
-                    _wrapper.SendText(command.Substring(5));
+                    _wrapper.SendText(args.Substring(5));
             }
 
             else
-                API.Log(API.LogType.Error, "RainMC.dll Command " + command + " not valid");
+                API.Log(API.LogType.Error, "RainMC.dll Command " + args + " not valid");
 
         }
 
@@ -239,15 +229,44 @@ namespace Plugin
                 History.Insert(0, e.Data);
         }
 
-        /// <summary>
-        /// Called when a measure is disposed (i.e. when Rainmeter is closed or when a skin is refreshed).
-        /// Dispose your measure object here.
-        /// </summary>
-        internal void Finalize()
+        ~Measure()
         {
             History.Clear();
             if (_wrapper != null)
                 _wrapper.Dispose();
+        }
+    }
+
+    public static class Plugin
+    {
+        public static void Initialize(ref IntPtr data, IntPtr rm)
+        {
+            data = GCHandle.ToIntPtr(GCHandle.Alloc(new Measure(new API(rm))));
+        }
+
+        public static void Finalize(IntPtr data)
+        {
+            GCHandle.FromIntPtr(data).Free();
+        }
+
+        public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
+        {
+            ((Measure)GCHandle.FromIntPtr(data).Target).Reload(new API(rm), ref maxValue);
+        }
+
+        public static double Update(IntPtr data)
+        {
+            return ((Measure)GCHandle.FromIntPtr(data).Target).GetDouble();
+        }
+
+        public static string GetString(IntPtr data)
+        {
+            return ((Measure)GCHandle.FromIntPtr(data).Target).GetString();
+        }
+
+        public static void ExecuteBang(IntPtr data, string args)
+        {
+            ((Measure)GCHandle.FromIntPtr(data).Target).ExecuteBang(args);
         }
     }
 }
