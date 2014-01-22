@@ -78,13 +78,6 @@ namespace Plugin
         /// <param name="maxValue">Max Value</param>
         internal void Reload(Rainmeter.API api, ref double maxValue)
         {
-            if (_wrapper != null && !_wrapper.Disconnected)
-            {
-                string console = _wrapper.ReadLine();
-                if (!String.IsNullOrEmpty(console))
-                    History.Insert(0, console);
-            }
-
             string type = api.ReadString("Type", "");
             switch (type.ToUpperInvariant())
             {
@@ -130,7 +123,7 @@ namespace Plugin
             {
                 case MeasureType.Answer:
 
-                    if (_wrapper != null && !_wrapper.Disconnected)
+                    if (_wrapper != null)
                     {
                         switch (_countType)
                         {
@@ -185,7 +178,10 @@ namespace Plugin
             if (command.ToUpperInvariant() == "START")
             {
                 if (_wrapper == null)
+                {
                     _wrapper = new Wrapper(Username, Password, ServerIP, Path);
+                    _wrapper.DataReceived += _wrapper_DataReceived;
+                }
             }
                 
             else if (command.ToUpperInvariant() == "RESTART")
@@ -194,6 +190,7 @@ namespace Plugin
                 {
                     _wrapper.Dispose();
                     _wrapper = new Wrapper(Username, Password, ServerIP, Path);
+                    _wrapper.DataReceived += _wrapper_DataReceived;
                 }
             }
 
@@ -203,10 +200,11 @@ namespace Plugin
                 {
                     _wrapper.Dispose();
                     _wrapper = null;
+                    History.Clear();
                 }
             }
 
-            else if (command.StartsWith("Text:"))
+            else if (command.ToUpperInvariant().StartsWith("TEXT:"))
             {
                 if (_wrapper != null)
                     _wrapper.SendText(command.Substring(5));
@@ -215,6 +213,13 @@ namespace Plugin
             else
                 API.Log(API.LogType.Error, "RainMC.dll Command " + command + " not valid");
 
+        }
+
+        private static void _wrapper_DataReceived(object sender, DataReceived e)
+        {
+            string console = e.Data;
+            if (!String.IsNullOrEmpty(console))
+                History.Insert(0, console);
         }
 
         /// <summary>

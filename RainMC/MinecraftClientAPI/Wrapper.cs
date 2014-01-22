@@ -11,9 +11,29 @@ namespace MinecraftClientAPI
     /// This class acts as a wrapper for MinecraftClient.exe
     /// Allows the rest of the program to consider this class as the Minecraft client itself.
     /// </summary>
-    internal sealed class Wrapper : IDisposable
+    public sealed class Wrapper : IDisposable
     {
-        public bool Disconnected { get; private set; }
+        #region Events
+
+        /// <summary>
+        /// Called when connected to server
+        /// </summary>
+        public event WrapperEventHandler<EventArgs> Connected;
+
+        /// <summary>
+        /// Called when disconnected from server
+        /// </summary>
+        public event WrapperEventHandler<EventArgs> Disconnected;
+
+        /// <summary>
+        /// Called when get data from Minecraft client. 
+        /// Returns formatted and raw data, so you don't need to use ReadLine
+        /// </summary>
+        public event WrapperEventHandler<DataReceived> DataReceived;
+
+        #endregion Events
+
+        public bool ConnectedToServer { get; private set; }
 
         private const string ExeName = "MinecraftClient.exe";
         private static string FolderPath { get; set; }
@@ -109,15 +129,18 @@ namespace MinecraftClientAPI
         /// <returns>MinecraftClient output</returns>
         public string ReadLine()
         {
-            var str = ReadLineRaw();
+            return FormatRaw(ReadLineRaw());
+        }
 
+        public static string FormatRaw(string str)
+        {
             if (!String.IsNullOrEmpty(str))
             {
                 string line = "";
                 string[] subs = str.Split('§');
                 if (subs[0].Length > 0)
                     line += subs[0];
-                
+
                 for (int i = 1; i < subs.Length; i++)
                 {
                     if (subs[i].Length > 1)
@@ -151,17 +174,31 @@ namespace MinecraftClientAPI
                 var line = e.Data;
                 switch (line.Trim())
                 {
-                    case "Server was successfully joined.":
-                        Disconnected = false;
+                    case "Console Client for MC 1.7.2 to 1.7.4 - v1.7.0 - By ORelio & Contributors":
                         break;
+
+                    case "Server was successfuly joined.":
+                        if (Connected != null)
+                            Connected(this, EventArgs.Empty);
+
+                        ConnectedToServer = true;
+                        break;
+
                     case "You have left the server.":
-                        Disconnected = true;
+                        if (Disconnected != null)
+                            Disconnected(this, EventArgs.Empty);
+
+                        ConnectedToServer = false;
                         break;
                 }
                 _outputBuffer.AddLast(line);
+
+                if (DataReceived != null)
+                    DataReceived(this, new DataReceived(line));
             }
         }
 
+        #region Dispose
 
         /// <summary>
         /// Properly disconnect from the server and dispose the client
@@ -182,7 +219,7 @@ namespace MinecraftClientAPI
 
                     if (!_client.WaitForExit(1000))
                         _client.Kill();
-                    
+
                 }
                 _disposed = true;
             }
@@ -192,5 +229,7 @@ namespace MinecraftClientAPI
         {
             Dispose(false);
         }
+
+        #endregion Dispose
     }
 }
