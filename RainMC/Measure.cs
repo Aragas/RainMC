@@ -1,4 +1,5 @@
-﻿using MinecraftClientAPI;
+﻿using System.IO;
+using MinecraftClientAPI;
 using Rainmeter;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace Plugin
     /// </summary>
     internal class Measure
     {
-        private static List<string> History = new List<string>();
+        private static readonly List<string> History = new List<string>();
 
         private static string Username = "";
         private static string Password = "";
@@ -191,6 +192,7 @@ namespace Plugin
                     _wrapper.Dispose();
                     _wrapper = new Wrapper(Username, Password, ServerIP, Path);
                     _wrapper.DataReceived += _wrapper_DataReceived;
+                    History.Clear();
                 }
             }
 
@@ -200,8 +202,9 @@ namespace Plugin
                 {
                     _wrapper.Dispose();
                     _wrapper = null;
-                    History.Clear();
                 }
+                SaveHistory();
+                History.Clear();
             }
 
             else if (command.ToUpperInvariant().StartsWith("TEXT:"))
@@ -215,11 +218,25 @@ namespace Plugin
 
         }
 
+        private static void SaveHistory()
+        {
+            string filename = String.Format("{0:yyyy-MM-dd-HH.mm.ss}.{1}", DateTime.Now, "log");
+            string directory = @"logs\";
+            if (!Directory.Exists(Path + directory))
+                Directory.CreateDirectory(Path + directory);
+
+            using (FileStream fileStream = new FileStream(Path + directory + filename, FileMode.OpenOrCreate))
+            using (StreamWriter streamWriter = new StreamWriter(fileStream))
+            {
+                History.Reverse();
+                History.ForEach(streamWriter.WriteLine);
+            }
+        }
+
         private static void _wrapper_DataReceived(object sender, DataReceived e)
         {
-            string console = e.Data;
-            if (!String.IsNullOrEmpty(console))
-                History.Insert(0, console);
+            if (!String.IsNullOrEmpty(e.Data))
+                History.Insert(0, e.Data);
         }
 
         /// <summary>
@@ -232,6 +249,5 @@ namespace Plugin
             if (_wrapper != null)
                 _wrapper.Dispose();
         }
-
     }
 }

@@ -43,19 +43,19 @@ namespace Rainmeter
 
         public static unsafe void Execute(IntPtr skin, string command)
         {
-            RmExecute((void*)skin, ToUnsafe(command));
+            NativeMethods.RmExecute((void*)skin, ToUnsafe(command));
         }
 
         public static unsafe void Log(LogType type, string message)
         {
-            LSLog((int)type, null, ToUnsafe(message));
+            NativeMethods.LSLog((int)type, null, ToUnsafe(message));
         }
 
         public unsafe string MeasureName
         {
             get
             {
-                var value = (char*) RmGet((void*) _mRm, 0);
+                var value = (char*) NativeMethods.RmGet((void*) _mRm, 0);
                 return new string(value);
             }
         }
@@ -64,84 +64,87 @@ namespace Rainmeter
         {
             get
             {
-                var value = (char*) RmGet((void*) _mRm, 2);
+                var value = (char*) NativeMethods.RmGet((void*) _mRm, 2);
                 return new string(value);
             }
         }
 
         public unsafe IntPtr Skin
         {
-            get { return (IntPtr) RmGet((void*) _mRm, 1); }
+            get { return (IntPtr) NativeMethods.RmGet((void*) _mRm, 1); }
         }
 
         public unsafe string SkinName
         {
             get
             {
-                var value = (char*) RmGet((void*) _mRm, 3);
+                var value = (char*) NativeMethods.RmGet((void*) _mRm, 3);
                 return new string(value);
             }
         }
 
         public unsafe IntPtr SkinWindow
         {
-            get { return (IntPtr) RmGet((void*) _mRm, 4); }
+            get { return (IntPtr) NativeMethods.RmGet((void*) _mRm, 4); }
         }
 
         public unsafe double ReadDouble(string option, double defValue)
         {
-            return RmReadFormula((void*)_mRm, ToUnsafe(option), defValue);
+            return NativeMethods.RmReadFormula((void*)_mRm, ToUnsafe(option), defValue);
         }
 
         public unsafe int ReadInt(string option, int defValue)
         {
-            return (int)RmReadFormula((void*)_mRm, ToUnsafe(option), defValue);
+            return (int)NativeMethods.RmReadFormula((void*)_mRm, ToUnsafe(option), defValue);
         }
 
         public unsafe string ReadPath(string option, string defValue)
         {
-            char* relativePath = RmReadString((void*)_mRm, ToUnsafe(option), ToUnsafe(defValue), 1);
-            char* value = RmPathToAbsolute((void*)_mRm, relativePath);
+            char* relativePath = NativeMethods.RmReadString((void*)_mRm, ToUnsafe(option), ToUnsafe(defValue), 1);
+            char* value = NativeMethods.RmPathToAbsolute((void*)_mRm, relativePath);
             return new string(value);
         }
 
         public unsafe string ReadString(string option, string defValue, bool replaceMeasures = true)
         {
-            char* value = RmReadString((void*)_mRm, ToUnsafe(option), ToUnsafe(defValue), replaceMeasures ? 1 : 0);
+            char* value = NativeMethods.RmReadString((void*)_mRm, ToUnsafe(option), ToUnsafe(defValue), replaceMeasures ? 1 : 0);
             return new string(value);
         }
 
         public unsafe string ReplaceVariables(string str)
         {
-            char* value = RmReplaceVariables((void*)_mRm, ToUnsafe(str));
+            char* value = NativeMethods.RmReplaceVariables((void*)_mRm, ToUnsafe(str));
             return new string(value);
         }
-
-        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
-        private static extern unsafe int LSLog(int type, char* unused, char* message);
-
-        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
-        private static extern unsafe void RmExecute(void* rm, char* command);
-
-        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
-        private static extern unsafe void* RmGet(void* rm, int type);
-
-        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
-        private static extern unsafe char* RmPathToAbsolute(void* rm, char* relativePath);
-
-        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
-        private static extern unsafe double RmReadFormula(void* rm, char* option, double defValue);
-
-        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
-        private static extern unsafe char* RmReadString(void* rm, char* option, char* defValue, int replaceMeasures);
-
-        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
-        private static extern unsafe char* RmReplaceVariables(void* rm, char* str);
 
         private static unsafe char* ToUnsafe(string s)
         {
             fixed (char* p = s) return p;
         }
+    }
+
+    internal static class NativeMethods
+    {
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.Cdecl)]
+        internal static extern unsafe int LSLog(int type, char* unused, char* message);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
+        internal static extern unsafe void RmExecute(void* rm, char* command);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
+        internal static extern unsafe void* RmGet(void* rm, int type);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
+        internal static extern unsafe char* RmPathToAbsolute(void* rm, char* relativePath);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
+        internal static extern unsafe double RmReadFormula(void* rm, char* option, double defValue);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
+        internal static extern unsafe char* RmReadString(void* rm, char* option, char* defValue, int replaceMeasures);
+
+        [DllImport("Rainmeter.dll", CharSet = CharSet.Auto)]
+        internal static extern unsafe char* RmReplaceVariables(void* rm, char* str);
     }
 
     /// <summary>

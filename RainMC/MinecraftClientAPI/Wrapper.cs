@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 using System.IO;
 using System.Diagnostics;
@@ -98,7 +97,8 @@ namespace MinecraftClientAPI
                         RedirectStandardOutput = true,
                         RedirectStandardInput = true,
                         CreateNoWindow = true,
-                        StandardOutputEncoding = Encoding.GetEncoding(CultureInfo.CurrentCulture.TextInfo.ANSICodePage)
+                        StandardOutputEncoding =
+                            Encoding.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ANSICodePage)
                     }
                 };
                 _client.OutputDataReceived += _client_OutputDataReceived;
@@ -111,7 +111,7 @@ namespace MinecraftClientAPI
         /// <summary>
         /// Get the first queuing output line to print in raw format.
         /// </summary>
-        /// <returns>Raw MinecraftClient output</returns>
+        /// <returns>Raw MinecraftClient first output from the beginning</returns>
         public string ReadLineRaw()
         {
             if (_outputBuffer.Count >= 1)
@@ -126,7 +126,7 @@ namespace MinecraftClientAPI
         /// <summary>
         /// Get the first queuing output line to print.
         /// </summary>
-        /// <returns>MinecraftClient output</returns>
+        /// <returns>MinecraftClient first output from the beginning</returns>
         public string ReadLine()
         {
             return FormatRaw(ReadLineRaw());
@@ -167,6 +167,9 @@ namespace MinecraftClientAPI
             }
         }
 
+        /// <summary>
+        /// Output from Minecraft client is processed here.
+        /// </summary>
         private void _client_OutputDataReceived(object sender, DataReceivedEventArgs e)
         {
             if (!String.IsNullOrEmpty(e.Data))
@@ -174,9 +177,6 @@ namespace MinecraftClientAPI
                 var line = e.Data;
                 switch (line.Trim())
                 {
-                    case "Console Client for MC 1.7.2 to 1.7.4 - v1.7.0 - By ORelio & Contributors":
-                        break;
-
                     case "Server was successfuly joined.":
                         if (Connected != null)
                             Connected(this, EventArgs.Empty);
