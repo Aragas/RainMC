@@ -1,9 +1,9 @@
-﻿using System.IO;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using MinecraftClientAPI;
 using Rainmeter;
-using System;
-using System.Collections.Generic;
 
 namespace Plugin
 {
@@ -239,34 +239,58 @@ namespace Plugin
 
     public static class Plugin
     {
+        static IntPtr StringBuffer = IntPtr.Zero;
+
         public static void Initialize(ref IntPtr data, IntPtr rm)
         {
-            data = GCHandle.ToIntPtr(GCHandle.Alloc(new Measure(new API(rm))));
+            data = GCHandle.ToIntPtr(GCHandle.Alloc(new Measure(new Rainmeter.API(rm))));
         }
 
         public static void Finalize(IntPtr data)
         {
             GCHandle.FromIntPtr(data).Free();
+
+            if (StringBuffer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(StringBuffer);
+                StringBuffer = IntPtr.Zero;
+            }
         }
 
         public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
         {
-            ((Measure)GCHandle.FromIntPtr(data).Target).Reload(new API(rm), ref maxValue);
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            measure.Reload(new Rainmeter.API(rm), ref maxValue);
         }
 
-        public static double Update(IntPtr data)
+        public static double GetDouble(IntPtr data)
         {
-            return ((Measure)GCHandle.FromIntPtr(data).Target).GetDouble();
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            return measure.GetDouble();
         }
 
-        public static string GetString(IntPtr data)
+        public static IntPtr GetString(IntPtr data)
         {
-            return ((Measure)GCHandle.FromIntPtr(data).Target).GetString();
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            if (StringBuffer != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(StringBuffer);
+                StringBuffer = IntPtr.Zero;
+            }
+
+            string stringValue = measure.GetString();
+            if (stringValue != null)
+            {
+                StringBuffer = Marshal.StringToHGlobalUni(stringValue);
+            }
+
+            return StringBuffer;
         }
 
-        public static void ExecuteBang(IntPtr data, string args)
+        public static void ExecuteBang(IntPtr data, IntPtr args)
         {
-            ((Measure)GCHandle.FromIntPtr(data).Target).ExecuteBang(args);
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            measure.ExecuteBang(Marshal.PtrToStringUni(args));
         }
     }
 }

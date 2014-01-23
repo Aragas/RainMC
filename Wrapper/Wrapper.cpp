@@ -27,7 +27,7 @@ PLUGIN_EXPORT void Reload(void* data, void* rm, double* maxValue)
 
 PLUGIN_EXPORT double Update(void* data)
 {
-	return Plugin::Plugin::Update((IntPtr)data);
+	return Plugin::Plugin::GetDouble((IntPtr)data);
 }
 
 PLUGIN_EXPORT LPCWSTR GetString(void* data)
@@ -36,21 +36,18 @@ PLUGIN_EXPORT LPCWSTR GetString(void* data)
 	static IntPtr buffer = zeroPtr;
 
 	Marshal::FreeHGlobal(buffer);
-	String^ output = Plugin::Plugin::GetString((IntPtr)data);
+	IntPtr output = Plugin::Plugin::GetString((IntPtr)data);
 
-	if (output != nullptr)
-	{
-		buffer = Marshal::StringToHGlobalUni(output);
-		return (LPCWSTR)(void*)buffer;
-	}
-
+	if (output != IntPtr::Zero)
+		return (LPCWSTR)(void*)output;
+	
 	buffer = zeroPtr;
 	return NULL;
 }
 
 PLUGIN_EXPORT void ExecuteBang(void* data, LPCWSTR args)
 {
-	Plugin::Plugin::ExecuteBang((IntPtr)data, Marshal::PtrToStringUni((IntPtr)(void*)args));
+	Plugin::Plugin::ExecuteBang((IntPtr)data, (IntPtr)(void*)args);
 }
 
 class AssemblyLoader
