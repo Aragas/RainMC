@@ -29,7 +29,7 @@ namespace Plugin
         /// Initialize your measure object here.
         /// </summary>
         /// <param name="api">Rainmeter API</param>
-        public Measure(Rainmeter.API api)
+        internal Measure(Rainmeter.API api)
         {
             if (String.IsNullOrEmpty(Path))
             {
@@ -163,7 +163,7 @@ namespace Plugin
         /// <summary>
         /// Called by Rainmeter when a !CommandMeasure bang is sent to the measure.
         /// </summary>
-        /// <param name="command">String containing the arguments to parse.</param>
+        /// <param name="args">String containing the arguments to parse.</param>
         internal void ExecuteBang(string args)
         {
             if (args.ToUpperInvariant() == "START")
@@ -241,11 +241,13 @@ namespace Plugin
     {
         static IntPtr StringBuffer = IntPtr.Zero;
 
+        [DllExport]
         public static void Initialize(ref IntPtr data, IntPtr rm)
         {
             data = GCHandle.ToIntPtr(GCHandle.Alloc(new Measure(new Rainmeter.API(rm))));
         }
 
+        [DllExport]
         public static void Finalize(IntPtr data)
         {
             GCHandle.FromIntPtr(data).Free();
@@ -257,18 +259,21 @@ namespace Plugin
             }
         }
 
+        [DllExport]
         public static void Reload(IntPtr data, IntPtr rm, ref double maxValue)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
             measure.Reload(new Rainmeter.API(rm), ref maxValue);
         }
 
+        [DllExport]
         public static double GetDouble(IntPtr data)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
             return measure.GetDouble();
         }
 
+        [DllExport]
         public static IntPtr GetString(IntPtr data)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
@@ -287,6 +292,7 @@ namespace Plugin
             return StringBuffer;
         }
 
+        [DllExport]
         public static void ExecuteBang(IntPtr data, IntPtr args)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Plugin</RootNamespace>
-    <AssemblyName>Plugin</AssemblyName>
+    <AssemblyName>RainMC</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -53,29 +53,18 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\RainmeterAPI\RainmeterAPI.cs">
+      <Link>RainmeterAPI.cs</Link>
+    </Compile>
     <Compile Include="MinecraftClientAPI\Wrapper.cs" />
     <Compile Include="MinecraftClientAPI\WrapperEventHandler.cs" />
     <Compile Include="Measure.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\RainmeterAPI\RainmeterAPI.csproj">
-      <Project>{6ec6ed93-32c4-41a3-9f17-e1bae6899cec}</Project>
-      <Name>RainmeterAPI</Name>
-      <Private>False</Private>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="..\Wrapper\PluginVersion.rc">
-      <Link>PluginVersion.rc</Link>
-    </Content>
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>"$(SolutionDir)RainmeterAPI\DllExporter.exe" "$(ConfigurationName)" "$(PlatformName)" "$(TargetDir)\" "$(TargetFileName)"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
