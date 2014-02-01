@@ -7,9 +7,21 @@ using Rainmeter;
 
 namespace Plugin
 {
-    internal class Measure
+    public class Measure
     {
-        private static readonly List<string> History = new List<string>();
+        public enum MeasureType { }
+
+        public virtual void Init(Rainmeter.API api) { }
+        public virtual void Reload(Rainmeter.API api, ref double maxValue) { }
+        public virtual double Update() { return 0.0; }
+        public virtual string GetString() { return null; }
+        public virtual void ExecuteBang(string args) { }
+        public virtual void Dispose() { }
+    }
+
+    internal class Login : Measure
+    {
+        internal static readonly List<string> History = new List<string>();
 
         private static string Username = "";
         private static string Password = "";
@@ -18,18 +30,22 @@ namespace Plugin
 
         private static Wrapper _wrapper;
 
-        private enum MeasureType { Login, Answer }
-        private MeasureType _type;
-
-        private enum CountType { One, Two, Three, Four, Five, Six, Seven }
-        private CountType _countType;
+        protected static bool WrapperIsNull
+        {
+            get
+            {
+                if (_wrapper == null)
+                    return true;
+                return false;
+            }
+        }
 
         /// <summary>
         /// Called when a measure is created (i.e. when Rainmeter is launched or when a skin is refreshed).
         /// Initialize your measure object here.
         /// </summary>
         /// <param name="api">Rainmeter API</param>
-        internal Measure(Rainmeter.API api)
+        public override void Init(Rainmeter.API api)
         {
             if (String.IsNullOrEmpty(Path))
             {
@@ -38,133 +54,16 @@ namespace Plugin
                     Path = path.Replace("\\" + path.Split('\\')[7], "\\");
             }
 
-            string type = api.ReadString("Type", "");
-            switch (type.ToUpperInvariant())
-            {
-
-                case "ANSWER":
-                    break;
-
-                case "LOGIN":
-                    _type = MeasureType.Login;
-
-                    Username = api.ReadString("Username", "ChatBot");
-                    Password = api.ReadString("Password", "-");
-                    ServerIP = api.ReadString("ServerIP", "localhost");
-                    break;
-
-                default:
-                    API.Log
-                        (API.LogType.Error, "RainMC.dll Type=" + type + " not valid");
-                    break;
-            }
-        }
-
-        /// <summary>
-        ///  Called when the measure settings are to be read directly after Initialize.
-        ///  If DynamicVariables=1 is set on the measure, Reload is called on every update cycle (usually once per second).
-        ///  Read and store measure settings here. To set a default maximum value for the measure, assign to maxValue.
-        /// </summary>
-        /// <param name="api">Rainmeter API</param>
-        /// <param name="maxValue">Max Value</param>
-        internal void Reload(Rainmeter.API api, ref double maxValue)
-        {
-            string type = api.ReadString("Type", "");
-            switch (type.ToUpperInvariant())
-            {
-                case "ANSWER":
-                    _type = MeasureType.Answer;
-
-                    int countType = api.ReadInt("Count", 1);
-                    switch (countType)
-                    {
-                        case 1: _countType = CountType.One; break;
-                        case 2: _countType = CountType.Two; break;
-                        case 3: _countType = CountType.Three; break;
-                        case 4: _countType = CountType.Four; break;
-                        case 5: _countType = CountType.Five; break;
-                        case 6: _countType = CountType.Six; break;
-                        case 7: _countType = CountType.Seven; break;
-                    }
-
-                    break;
-
-                case "LOGIN":
-                    break;
-
-                default:
-                    API.Log
-                        (API.LogType.Error, "RainMC.dll Type=" + type + " not valid");
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// Called on every update cycle (usually once per second).
-        /// </summary>
-        /// <returns>Return the numerical value for the measure here.</returns>
-        internal double GetDouble()
-        {
-            return 0.0;
-        }
-
-        internal string GetString()
-        {
-            switch (_type)
-            {
-                case MeasureType.Answer:
-
-                    if (_wrapper != null)
-                    {
-                        switch (_countType)
-                        {
-                            case CountType.One:
-                                try { return History[0]; }
-                                catch (ArgumentOutOfRangeException) { }
-                                break;
-
-                            case CountType.Two:
-                                try { return History[1]; }
-                                catch (ArgumentOutOfRangeException) { }
-                                break;
-
-                            case CountType.Three:
-                                try { return History[2]; }
-                                catch (ArgumentOutOfRangeException) { }
-                                break;
-
-                            case CountType.Four:
-                                try { return History[3]; }
-                                catch (ArgumentOutOfRangeException) { }
-                                break;
-
-                            case CountType.Five:
-                                try { return History[4]; }
-                                catch (ArgumentOutOfRangeException) { }
-                                break;
-
-                            case CountType.Six:
-                                try { return History[5]; }
-                                catch (ArgumentOutOfRangeException) { }
-                                break;
-
-                            case CountType.Seven:
-                                try { return History[6]; }
-                                catch (ArgumentOutOfRangeException) { }
-                                break;
-                        }
-                    }
-                    break;
-
-            }
-            return null;
+            Username = api.ReadString("Username", "ChatBot");
+            Password = api.ReadString("Password", "-");
+            ServerIP = api.ReadString("ServerIP", "localhost");
         }
 
         /// <summary>
         /// Called by Rainmeter when a !CommandMeasure bang is sent to the measure.
         /// </summary>
         /// <param name="args">String containing the arguments to parse.</param>
-        internal void ExecuteBang(string args)
+        public override void ExecuteBang(string args)
         {
             if (args.ToUpperInvariant() == "START")
             {
@@ -229,11 +128,97 @@ namespace Plugin
                 History.Insert(0, e.Data);
         }
 
-        ~Measure()
+        public override void Dispose()
         {
             History.Clear();
             if (_wrapper != null)
+            {
                 _wrapper.Dispose();
+                _wrapper = null;
+            }
+
+        }
+    }
+
+    internal class Answer : Login
+    {
+        private new enum MeasureType { One, Two, Three, Four, Five, Six, Seven }
+        private MeasureType _type;
+
+        public override void Reload(API api, ref double maxValue)
+        {
+            int type = api.ReadInt("Count", 1);
+            switch (type)
+            {
+                case 1:
+                    _type = MeasureType.One;
+                    break;
+                case 2:
+                    _type = MeasureType.Two;
+                    break;
+                case 3:
+                    _type = MeasureType.Three;
+                    break;
+                case 4:
+                    _type = MeasureType.Four;
+                    break;
+                case 5:
+                    _type = MeasureType.Five;
+                    break;
+                case 6:
+                    _type = MeasureType.Six;
+                    break;
+                case 7:
+                    _type = MeasureType.Seven;
+                    break;
+            }
+
+        }
+
+        public override string GetString()
+        {
+            if (!WrapperIsNull)
+            {
+                switch (_type)
+                {
+                    case MeasureType.One:
+                        try { return History[0]; }
+                        catch (ArgumentOutOfRangeException) { }
+                        break;
+
+                    case MeasureType.Two:
+                        try { return History[1]; }
+                        catch (ArgumentOutOfRangeException) { }
+                        break;
+
+                    case MeasureType.Three:
+                        try { return History[2]; }
+                        catch (ArgumentOutOfRangeException) { }
+                        break;
+
+                    case MeasureType.Four:
+                        try { return History[3]; }
+                        catch (ArgumentOutOfRangeException) { }
+                        break;
+
+                    case MeasureType.Five:
+                        try { return History[4]; }
+                        catch (ArgumentOutOfRangeException) { }
+                        break;
+
+                    case MeasureType.Six:
+                        try { return History[5]; }
+                        catch (ArgumentOutOfRangeException) { }
+                        break;
+
+                    case MeasureType.Seven:
+                        try { return History[6]; }
+                        catch (ArgumentOutOfRangeException) { }
+                        break;
+                }
+            }
+
+            return null;
         }
     }
 
@@ -241,22 +226,42 @@ namespace Plugin
     {
         static IntPtr StringBuffer = IntPtr.Zero;
 
+        private static void GetMeasure(string type, ref Measure measure)
+        {
+            switch (type.ToUpper())
+            {
+                case "LOGIN":
+                    measure = new Login();
+                    break;
+
+                case "ANSWER":
+                    measure = new Answer();
+                    break;
+            }
+        }
+
         [DllExport]
         public static void Initialize(ref IntPtr data, IntPtr rm)
         {
-            data = GCHandle.ToIntPtr(GCHandle.Alloc(new Measure(new Rainmeter.API(rm))));
+            Rainmeter.API api = new Rainmeter.API(rm);
+
+            string type = api.ReadString("Type", "");
+
+            Measure measure = null;
+
+            GetMeasure(type, ref measure);
+            measure.Init(api);
+
+            data = GCHandle.ToIntPtr(GCHandle.Alloc(measure));
         }
 
         [DllExport]
         public static void Finalize(IntPtr data)
         {
-            GCHandle.FromIntPtr(data).Free();
+            Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
+            measure.Dispose();
 
-            if (StringBuffer != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(StringBuffer);
-                StringBuffer = IntPtr.Zero;
-            }
+            GCHandle.FromIntPtr(data).Free();
         }
 
         [DllExport]
@@ -267,10 +272,10 @@ namespace Plugin
         }
 
         [DllExport]
-        public static double GetDouble(IntPtr data)
+        public static double Update(IntPtr data)
         {
             Measure measure = (Measure)GCHandle.FromIntPtr(data).Target;
-            return measure.GetDouble();
+            return measure.Update();
         }
 
         [DllExport]
