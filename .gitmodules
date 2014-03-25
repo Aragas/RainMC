@@ -1,3 +1,3 @@
-[submodule "Minecraft-Console-Client"]
-	path = Minecraft-Console-Client
-	url = https://github.com/ORelio/Minecraft-Console-Client.git
+[submodule "MineLib.Network"]
+	path = MineLib.Network
+	url = https://github.com/Aragas/MineLib.Network.git

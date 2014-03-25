@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
-using MinecraftClientAPI;
+using Minecraft;
 using Rainmeter;
 
 namespace Plugin
 {
-    public class Measure
+    internal class Measure
     {
         public enum MeasureType { }
 
@@ -19,26 +20,23 @@ namespace Plugin
         public virtual void Dispose() { }
     }
 
-    internal class Login : Measure
+    internal class MinecraftBotWrapper : Measure
     {
         internal static readonly List<string> History = new List<string>();
 
-        private static string Username = "";
-        private static string Password = "";
-        private static string ServerIP = "";
-        private static string Path = "";
+        private static string _login = "";
+        private static string _username = "";
+        private static string _password = "";
+        private static string _serverIp = "";
+        public static string Path { get; private set; }
 
-        private static Wrapper _wrapper;
+        private static Bot _client;
 
-        protected static bool WrapperIsNull
+        internal static bool ClientIsNull
         {
-            get
-            {
-                if (_wrapper == null)
-                    return true;
-                return false;
-            }
+            get { return _client == null; }
         }
+
 
         /// <summary>
         /// Called when a measure is created (i.e. when Rainmeter is launched or when a skin is refreshed).
@@ -54,9 +52,38 @@ namespace Plugin
                     Path = path.Replace("\\" + path.Split('\\')[7], "\\");
             }
 
-            Username = api.ReadString("Username", "ChatBot");
-            Password = api.ReadString("Password", "-");
-            ServerIP = api.ReadString("ServerIP", "localhost");
+            _login    = api.ReadString("Login", "ChatBot");
+            _username = api.ReadString("Username", "ChatBot");
+            _password = api.ReadString("Password", "");
+            _serverIp = api.ReadString("ServerIP", "localhost");
+
+            // Load all .dll from libs folder.
+            AppDomain.CurrentDomain.AssemblyResolve += (s, e) =>
+            {
+                string strTempAssmbPath = "";
+
+                Assembly objExecutingAssemblies = Assembly.GetExecutingAssembly();
+                AssemblyName[] arrReferencedAssmbNames = objExecutingAssemblies.GetReferencedAssemblies();
+
+                foreach (AssemblyName strAssmbName in arrReferencedAssmbNames)
+                {
+                    if (strAssmbName.FullName.Substring(0, strAssmbName.FullName.IndexOf(",", StringComparison.Ordinal)) ==
+                        e.Name.Substring(0, e.Name.IndexOf(",", StringComparison.Ordinal)))
+                    {
+                        strTempAssmbPath = Path + "\\libs\\" +
+                                           e.Name.Substring(0, e.Name.IndexOf(",", StringComparison.Ordinal)) +
+                                           ".dll";
+                        break;
+                    }
+
+                }			
+                Assembly myAssembly = Assembly.LoadFrom(strTempAssmbPath);
+
+                return myAssembly;
+            };
+
+            ChatParser.TagEnabled = false;
+
         }
 
         /// <summary>
@@ -67,39 +94,41 @@ namespace Plugin
         {
             if (args.ToUpperInvariant() == "START")
             {
-                if (_wrapper == null)
+                if (ClientIsNull)
                 {
-                    _wrapper = new Wrapper(Username, Password, ServerIP, Path);
-                    _wrapper.DataReceived += _wrapper_DataReceived;
+                    _client = new Bot(_login, _password, _username);
+                    _client.OnChatMessageReceived += _client_OnChatMessageReceived;
+                    _client.Connect(_serverIp);
                 }
             }
 
             else if (args.ToUpperInvariant() == "RESTART")
             {
-                if (_wrapper != null)
-                {
-                    _wrapper.Dispose();
-                    _wrapper = new Wrapper(Username, Password, ServerIP, Path);
-                    _wrapper.DataReceived += _wrapper_DataReceived;
-                    History.Clear();
-                }
+                if (!ClientIsNull)
+                    _client.Dispose();
+
+                _client = new Bot(_login, _password, _username);
+                _client.OnChatMessageReceived += _client_OnChatMessageReceived;
+                _client.Connect(_serverIp);
+
+                History.Clear();
             }
 
             else if (args.ToUpperInvariant() == "EXIT")
             {
-                if (_wrapper != null)
-                {
-                    _wrapper.Dispose();
-                    _wrapper = null;
-                }
+                if (!ClientIsNull)
+                    _client.Dispose();
+                _client = null;
+
+
                 SaveHistory();
                 History.Clear();
             }
 
             else if (args.ToUpperInvariant().StartsWith("TEXT:"))
             {
-                if (_wrapper != null)
-                    _wrapper.SendText(args.Substring(5));
+                if (!ClientIsNull)
+                    _client.SendChatMessage(args.Substring(5));
             }
 
             else
@@ -107,40 +136,46 @@ namespace Plugin
 
         }
 
+        private void _client_OnChatMessageReceived(string message)
+        {
+            if (!String.IsNullOrEmpty(message))
+                History.Insert(0, message);
+        }
+
         private static void SaveHistory()
         {
             string filename = String.Format("{0:yyyy-MM-dd-HH.mm.ss}.{1}", DateTime.Now, "log");
-            string directory = @"logs\";
+            const string directory = @"logs\";
             if (!Directory.Exists(Path + directory))
                 Directory.CreateDirectory(Path + directory);
 
-            using (FileStream fileStream = new FileStream(Path + directory + filename, FileMode.OpenOrCreate))
-            using (StreamWriter streamWriter = new StreamWriter(fileStream))
+            using (var fileStream = new FileStream(Path + directory + filename, FileMode.OpenOrCreate))
+            using (var streamWriter = new StreamWriter(fileStream))
             {
                 History.Reverse();
                 History.ForEach(streamWriter.WriteLine);
             }
         }
 
-        private static void _wrapper_DataReceived(object sender, DataReceived e)
+        public static void AddString(string message)
         {
-            if (!String.IsNullOrEmpty(e.Data))
-                History.Insert(0, e.Data);
+            if (History != null)
+                History.Insert(0, message);
         }
 
         public override void Dispose()
         {
             History.Clear();
-            if (_wrapper != null)
+            if (!ClientIsNull)
             {
-                _wrapper.Dispose();
-                _wrapper = null;
+                _client.Dispose();
+                _client = null;
             }
 
         }
     }
 
-    internal class Answer : Login
+    internal class Parser : MinecraftBotWrapper
     {
         private new enum MeasureType { One, Two, Three, Four, Five, Six, Seven }
         private MeasureType _type;
@@ -177,7 +212,7 @@ namespace Plugin
 
         public override string GetString()
         {
-            if (!WrapperIsNull)
+            if (!ClientIsNull)
             {
                 switch (_type)
                 {
@@ -231,11 +266,11 @@ namespace Plugin
             switch (type.ToUpper())
             {
                 case "LOGIN":
-                    measure = new Login();
+                    measure = new MinecraftBotWrapper();
                     break;
 
                 case "ANSWER":
-                    measure = new Answer();
+                    measure = new Parser();
                     break;
             }
         }

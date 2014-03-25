@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RainMC", "RainMC\RainMC.csproj", "{5EBA00E3-B3FC-4D4F-A1CB-52BD0004F0D8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MineLib.Network", "MineLib.Network\MineLib.Network.csproj", "{E7C8320E-49A4-4187-AFE3-15C814201E1E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -19,6 +21,14 @@ Global
 		{5EBA00E3-B3FC-4D4F-A1CB-52BD0004F0D8}.Release|x64.Build.0 = Release|x64
 		{5EBA00E3-B3FC-4D4F-A1CB-52BD0004F0D8}.Release|x86.ActiveCfg = Release|x86
 		{5EBA00E3-B3FC-4D4F-A1CB-52BD0004F0D8}.Release|x86.Build.0 = Release|x86
+		{E7C8320E-49A4-4187-AFE3-15C814201E1E}.Debug|x64.ActiveCfg = Debug|x64
+		{E7C8320E-49A4-4187-AFE3-15C814201E1E}.Debug|x64.Build.0 = Debug|x64
+		{E7C8320E-49A4-4187-AFE3-15C814201E1E}.Debug|x86.ActiveCfg = Debug|x86
+		{E7C8320E-49A4-4187-AFE3-15C814201E1E}.Debug|x86.Build.0 = Debug|x86
+		{E7C8320E-49A4-4187-AFE3-15C814201E1E}.Release|x64.ActiveCfg = Release|Any CPU
+		{E7C8320E-49A4-4187-AFE3-15C814201E1E}.Release|x64.Build.0 = Release|Any CPU
+		{E7C8320E-49A4-4187-AFE3-15C814201E1E}.Release|x86.ActiveCfg = Release|Any CPU
+		{E7C8320E-49A4-4187-AFE3-15C814201E1E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
