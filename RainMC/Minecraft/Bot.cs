@@ -6,6 +6,7 @@ using MineLib.Network.Enums;
 using MineLib.Network.Packets;
 using MineLib.Network.Packets.Client;
 using MineLib.Network.Packets.Client.Login;
+using Plugin;
 
 namespace Minecraft
 {
@@ -136,14 +137,39 @@ namespace Minecraft
                 Handler.Send(packet);
         }
 
-        public void SendChatMessage(string message)
+        public void SendRespawnPacket()
         {
-            //var encoding = Encoding.GetEncoding(System.Globalization.CultureInfo.CurrentCulture.TextInfo.ANSICodePage);
-            //var bytes = encoding.GetBytes(message);
-            //var converted = Encoding.Convert(encoding, Encoding.UTF8, bytes);
-            //message = Encoding.UTF8.GetString(converted);
             if (Handler != null && Connected)
-                Handler.Send(new ChatMessagePacket { Message = message });
+                SendPacket(new ClientStatusPacket { Status = ClientStatus.Respawn });
+        }
+
+        public void SendChatMessage(string text)
+        {
+            if (Handler == null && !Connected)
+                return;
+
+            //Message is too long
+            if (text.Length > 100)
+            {
+                if (text[0] == '/')
+                {
+                    //Send the first 100 chars of the command
+                    text = text.Substring(0, 100);
+                    Handler.Send(new ChatMessagePacket { Message = text });
+                }
+                else
+                {
+                    //Send the message splitted in several messages
+                    while (text.Length > 100)
+                    {
+                        Handler.Send(new ChatMessagePacket { Message = text.Substring(0, 100) });
+                        text = text.Substring(100, text.Length - 100);
+                    }
+                    Handler.Send(new ChatMessagePacket { Message = text });
+                }
+            }
+            else
+                Handler.Send(new ChatMessagePacket { Message = text });
         }
 
         /// <summary>

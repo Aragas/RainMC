@@ -58,23 +58,6 @@ namespace Minecraft
         {
             var playerPositionAndLook = (PlayerPositionAndLookPacket) packet;
 
-            SendPacket(new MineLib.Network.Packets.Client.ClientStatusPacket { Status = ClientStatus.Respawn });
-
-            SendPacket(new MineLib.Network.Packets.Client.PlayerPositionPacket
-            {
-                X = playerPositionAndLook.X,
-                HeadY = playerPositionAndLook.Y + 1.74,
-                FeetY = playerPositionAndLook.Y + 1.74 - 1.62,
-                Z = playerPositionAndLook.Z,
-                OnGround = playerPositionAndLook.OnGround
-            });
-
-            SendPacket(new MineLib.Network.Packets.Client.PlayerLookPacket
-            {
-                Yaw = playerPositionAndLook.Yaw,
-                Pitch = playerPositionAndLook.Pitch,
-                OnGround = playerPositionAndLook.OnGround
-            });
         }
 
         private void OnChangeGameState(IPacket packet)

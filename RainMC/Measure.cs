@@ -4,6 +4,8 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Minecraft;
+using MineLib.Network.Enums;
+using MineLib.Network.Packets.Client;
 using Rainmeter;
 
 namespace Plugin
@@ -103,37 +105,68 @@ namespace Plugin
             }
 
             else if (args.ToUpperInvariant() == "RESTART")
-            {
-                if (!ClientIsNull)
-                    _client.Dispose();
+                Restart();
+            
 
-                _client = new Bot(_login, _password, _username);
-                _client.OnChatMessageReceived += _client_OnChatMessageReceived;
-                _client.Connect(_serverIp);
-
-                History.Clear();
-            }
-
-            else if (args.ToUpperInvariant() == "EXIT")
-            {
-                if (!ClientIsNull)
-                    _client.Dispose();
-                _client = null;
-
-
-                SaveHistory();
-                History.Clear();
-            }
+            else if (args.ToUpperInvariant() == "QUIT")
+                Quit();
+            
 
             else if (args.ToUpperInvariant().StartsWith("TEXT:"))
             {
+                string text = args.Substring(5);
+
                 if (!ClientIsNull)
-                    _client.SendChatMessage(args.Substring(5));
+                    HandleText(text);
             }
 
             else
                 API.Log(API.LogType.Error, "RainMC.dll Command " + args + " not valid");
 
+        }
+
+        private void Restart()
+        {
+            if (!ClientIsNull)
+                _client.Dispose();
+
+            _client = new Bot(_login, _password, _username);
+            _client.OnChatMessageReceived += _client_OnChatMessageReceived;
+            _client.Connect(_serverIp);
+
+            History.Clear();
+        }
+
+        private void Quit()
+        {
+            if (!ClientIsNull)
+                _client.Dispose();
+            _client = null;
+
+
+            SaveHistory();
+            History.Clear();
+        }
+
+        private void HandleText(string text)
+        {
+            text = text.Trim();
+
+            if (text.ToLower() == "/quit")
+                Quit();
+
+            else if (text.ToLower() == "/reco" || text.ToLower() == "/reconnect")
+                Restart();
+
+            else if (text.ToLower() == "/resp" ||text.ToLower() == "/respawn")
+            {
+                _client.SendRespawnPacket();
+                AddString("You have respawned.");
+            }
+
+            else if (text != "")
+                _client.SendChatMessage(text);
+            
         }
 
         private void _client_OnChatMessageReceived(string message)
