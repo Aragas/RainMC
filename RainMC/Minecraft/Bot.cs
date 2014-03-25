@@ -6,7 +6,6 @@ using MineLib.Network.Enums;
 using MineLib.Network.Packets;
 using MineLib.Network.Packets.Client;
 using MineLib.Network.Packets.Client.Login;
-using Plugin;
 
 namespace Minecraft
 {
@@ -179,7 +178,7 @@ namespace Minecraft
         {
             // -- Reset all variables to default so we can make a new connection.
 
-            SendPacket(new DisconnectPacket { Reason = "disconnect.quitting" });
+            //SendPacket(new DisconnectPacket { Reason = "disconnect.quitting" });
 
             State = ServerState.Login;
         }

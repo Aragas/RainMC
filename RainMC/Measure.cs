@@ -4,8 +4,6 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Minecraft;
-using MineLib.Network.Enums;
-using MineLib.Network.Packets.Client;
 using Rainmeter;
 
 namespace Plugin
@@ -60,32 +58,30 @@ namespace Plugin
             _serverIp = api.ReadString("ServerIP", "localhost");
 
             // Load all .dll from libs folder.
-            AppDomain.CurrentDomain.AssemblyResolve += (s, e) =>
-            {
-                string strTempAssmbPath = "";
-
-                Assembly objExecutingAssemblies = Assembly.GetExecutingAssembly();
-                AssemblyName[] arrReferencedAssmbNames = objExecutingAssemblies.GetReferencedAssemblies();
-
-                foreach (AssemblyName strAssmbName in arrReferencedAssmbNames)
-                {
-                    if (strAssmbName.FullName.Substring(0, strAssmbName.FullName.IndexOf(",", StringComparison.Ordinal)) ==
-                        e.Name.Substring(0, e.Name.IndexOf(",", StringComparison.Ordinal)))
-                    {
-                        strTempAssmbPath = Path + "\\libs\\" +
-                                           e.Name.Substring(0, e.Name.IndexOf(",", StringComparison.Ordinal)) +
-                                           ".dll";
-                        break;
-                    }
-
-                }			
-                Assembly myAssembly = Assembly.LoadFrom(strTempAssmbPath);
-
-                return myAssembly;
-            };
+            AppDomain.CurrentDomain.AssemblyResolve += OnAssemblyResolve;
 
             ChatParser.TagEnabled = false;
 
+        }
+
+        public static Assembly OnAssemblyResolve(object s, ResolveEventArgs e)
+        {
+            string strTempAssmbPath = "";
+
+            Assembly objExecutingAssemblies = Assembly.GetExecutingAssembly();
+            AssemblyName[] arrReferencedAssmbNames = objExecutingAssemblies.GetReferencedAssemblies();
+
+            foreach (AssemblyName strAssmbName in arrReferencedAssmbNames)
+            {
+                if (strAssmbName.FullName.Substring(0, strAssmbName.FullName.IndexOf(",", StringComparison.Ordinal)) == e.Name.Substring(0, e.Name.IndexOf(",", StringComparison.Ordinal)))
+                {
+                    strTempAssmbPath = Path + "\\libs\\" + e.Name.Substring(0, e.Name.IndexOf(",", StringComparison.Ordinal)) + ".dll";
+                    break;
+                }
+            }
+            Assembly myAssembly = Assembly.LoadFrom(strTempAssmbPath);
+
+            return myAssembly;
         }
 
         /// <summary>
